@@ -17,6 +17,9 @@ end
 
 function code_search(methods::Base.MethodList)
     out = String(read_stdout(`peco`, join(map(string, methods), "\n")))
+    if isempty(out)
+        return
+    end
     path, lineno = parse_loc(out)
     info("Opening $path:$lineno")
     edit(path, lineno)
