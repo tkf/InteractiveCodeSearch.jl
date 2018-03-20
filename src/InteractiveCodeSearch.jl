@@ -28,7 +28,7 @@ end
 code_search(f::Base.Callable) = code_search(methods(f))
 
 macro search(x)
-    if x isa Symbol
+    if x isa Symbol || x isa Expr && x.head == :.
         :(code_search($(esc(x))))
     else
         :(@edit $(esc(x)))
