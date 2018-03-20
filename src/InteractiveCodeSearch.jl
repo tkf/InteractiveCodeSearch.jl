@@ -30,6 +30,8 @@ code_search(f::Base.Callable) = code_search(methods(f))
 macro search(x)
     if x isa Symbol || x isa Expr && x.head == :.
         :(code_search($(esc(x))))
+    elseif x isa Expr && x.head == :macrocall && length(x.args) == 1
+        :(code_search(Base.methods($(esc(x.args[1])))))
     else
         :(@edit $(esc(x)))
     end
