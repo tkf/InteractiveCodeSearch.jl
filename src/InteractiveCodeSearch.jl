@@ -82,6 +82,27 @@ const CONFIG = SearchConfig(
     `peco`,                     # interactive_matcher
 )
 
+isline(::Any) = false
+isline(ex::Expr) = ex.head == :line
+try
+    isline(::LineNumberNode) = true
+catch err
+    err isa UndefVarError || rethrow()
+end
+
+single_macrocall(::Any) = nothing
+function single_macrocall(x::Expr)
+    if x.head == :macrocall && all(isline.(x.args[2:end]))
+        return x.args[1]
+    elseif x.head == :block
+        statements = find(a -> !isline(a), x.args)
+        if length(statements) == 1
+            return single_macrocall(x.args[statements[1]])
+        end
+    end
+    return nothing
+end
+
 """
     @search x
 
@@ -93,10 +114,13 @@ See also `?InteractiveCodeSearch`
 macro search(x)
     if x isa Symbol || x isa Expr && x.head == :.
         :(code_search($(esc(x))))
-    elseif x isa Expr && x.head == :macrocall && length(x.args) == 1
-        :(code_search(Base.methods($(esc(x.args[1])))))
     else
-        :(@edit $(esc(x)))
+        macrocall = single_macrocall(x)
+        if macrocall !== nothing
+            :(code_search(Base.methods($(esc(macrocall)))))
+        else
+            :(@edit $(esc(x)))
+        end
     end
 end
 

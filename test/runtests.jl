@@ -2,7 +2,7 @@ module TestInteractiveCodeSearch
 
 using InteractiveCodeSearch
 using InteractiveCodeSearch: list_locatables, module_methods,
-    read_stdout, parse_loc
+    read_stdout, parse_loc, single_macrocall
 using Base.Test
 
 macro test_nothrow(ex)
@@ -38,6 +38,13 @@ end
 @testset "module_methods" begin
     @test_nothrow module_methods(InteractiveCodeSearch)
     @test_nothrow module_methods(Base.Filesystem)
+end
+
+@testset "single_macrocall" begin
+    @test single_macrocall(:(@search)) == Symbol("@search")
+    @test single_macrocall(quote @search end) == Symbol("@search")
+    @test single_macrocall(:f) == nothing
+    @test single_macrocall(quote f end) == nothing
 end
 
 @testset "patched" begin
