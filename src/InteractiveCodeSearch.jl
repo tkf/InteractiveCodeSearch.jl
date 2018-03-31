@@ -82,6 +82,14 @@ const CONFIG = SearchConfig(
     `peco`,                     # interactive_matcher
 )
 
+"""
+    @search x
+
+List file locations at which `x` are defined in an interactive matcher
+and then open the chosen location in the editor.
+
+See also `?InteractiveCodeSearch`
+"""
 macro search(x)
     if x isa Symbol || x isa Expr && x.head == :.
         :(code_search($(esc(x))))
