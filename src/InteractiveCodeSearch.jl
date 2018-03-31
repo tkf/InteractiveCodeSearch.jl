@@ -3,20 +3,37 @@ export @search, @searchmethods
 
 using Base: find_source_file
 
+@static if VERSION < v"0.7-"
+    const Nothing = Void
+    const findall = find
+    const _ismatch = ismatch
+    const _readandwrite = readandwrite
+    const _fetch = wait
+    allnames(x) = names(x, true)
+else
+    const _fetch = fetch
+    allnames(x) = names(x, all=true)
+    _ismatch(r, s) = contains(s, r)
+    function _readandwrite(cmds)
+        processes = open(cmds, "r+")
+        return (processes.out, processes.in, processes)
+    end
+end
+
 mutable struct SearchConfig  # CONFIG
     open
     interactive_matcher
     auto_open
 end
 
-is_identifier(s) = ismatch(r"^@?[a-z_]+$"i, string(s))
+is_identifier(s) = _ismatch(r"^@?[a-z_]+$"i, string(s))
 
 is_locatables(::Any) = false
 is_locatables(::Base.Callable) = true
 
 function list_locatables(m::Module)
     locs = []
-    for s in names(m, true)
+    for s in allnames(m)
         if is_identifier(s)
             x = try
                 getfield(m, s)
@@ -51,11 +68,11 @@ end
 
 
 function read_stdout(cmd, input)
-    stdout, stdin, process = readandwrite(cmd)
+    stdout, stdin, process = _readandwrite(cmd)
     reader = @async read(stdout)
     write(stdin, input)
     close(stdin)
-    return wait(reader)
+    return _fetch(reader)
 end
 
 function parse_loc(line)
@@ -89,7 +106,7 @@ function run_open(path, lineno)
     CONFIG.open(find_source_file(path), lineno)
 end
 
-maybe_open(::Void) = nothing
+maybe_open(::Nothing) = nothing
 maybe_open(x::Tuple{String, Integer}) = run_open(x...)
 
 search_methods(methods) = maybe_open(choose_method(methods))
@@ -113,7 +130,7 @@ const CONFIG = SearchConfig(
 isline(::Any) = false
 isline(ex::Expr) = ex.head == :line
 try
-    isline(::LineNumberNode) = true
+    @eval isline(::LineNumberNode) = true
 catch err
     err isa UndefVarError || rethrow()
 end
@@ -123,7 +140,7 @@ function single_macrocall(x::Expr)
     if x.head == :macrocall && all(isline.(x.args[2:end]))
         return x.args[1]
     elseif x.head == :block
-        statements = find(a -> !isline(a), x.args)
+        statements = findall(a -> !isline(a), x.args)
         if length(statements) == 1
             return single_macrocall(x.args[statements[1]])
         end

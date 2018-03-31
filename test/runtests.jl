@@ -4,7 +4,13 @@ using InteractiveCodeSearch
 using InteractiveCodeSearch: list_locatables, module_methods, choose_method,
     read_stdout, parse_loc, single_macrocall
 using Base: find_source_file
-using Base.Test
+
+try
+    @eval using Test
+catch err
+    err isa ArgumentError || rethrow()
+    @eval using Base.Test
+end
 
 macro test_nothrow(ex)
     quote
