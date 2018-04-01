@@ -37,6 +37,8 @@ using InteractiveCodeSearch
 using InteractiveCodeSearch
 InteractiveCodeSearch.CONFIG.interactive_matcher = `peco`    # default
 InteractiveCodeSearch.CONFIG.interactive_matcher = `percol`
+InteractiveCodeSearch.CONFIG.open = edit  # default
+InteractiveCodeSearch.CONFIG.open = less  # use Base.less to read code
 ```
 
 

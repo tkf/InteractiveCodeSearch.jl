@@ -1,6 +1,8 @@
 module InteractiveCodeSearch
 export @search
 
+using Base: find_source_file
+
 mutable struct SearchConfig  # CONFIG
     open
     interactive_matcher
@@ -57,13 +59,13 @@ function choose_method(methods)
     return parse_loc(out)
 end
 
-function default_openline(path, lineno)
+function run_open(path, lineno)
     info("Opening $path:$lineno")
-    edit(path, lineno)
+    CONFIG.open(find_source_file(path), lineno)
 end
 
 maybe_open(::Void) = nothing
-maybe_open(x::Tuple{String, Int}) = CONFIG.open(x...)
+maybe_open(x::Tuple{String, Int}) = run_open(x...)
 
 search_methods(methods) = maybe_open(choose_method(methods))
 
@@ -78,7 +80,7 @@ function code_search(x::T) where T
 end
 
 const CONFIG = SearchConfig(
-    default_openline,           # open
+    edit,                       # open
     `peco`,                     # interactive_matcher
 )
 

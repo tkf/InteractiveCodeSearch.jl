@@ -3,6 +3,7 @@ module TestInteractiveCodeSearch
 using InteractiveCodeSearch
 using InteractiveCodeSearch: list_locatables, module_methods,
     read_stdout, parse_loc, single_macrocall
+using Base: find_source_file
 using Base.Test
 
 macro test_nothrow(ex)
@@ -61,7 +62,8 @@ end
         @test_nothrow @eval @search read_stdout
         @test_nothrow @eval @search @search
         @test_nothrow @eval @search InteractiveCodeSearch
-        @test open_args == repeat([("test.jl", 249)], outer=3)
+        @test open_args == repeat([(find_source_file("test.jl"), 249)],
+                                  outer=3)
 
         # @show open_args
     finally
