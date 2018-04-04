@@ -71,8 +71,7 @@ search_methods(methods) = maybe_open(choose_method(methods))
 
 
 code_search(f, t) = search_methods(methods(f, t))
-code_search(f::Base.Callable) = code_search(methods(f))
-code_search(ms::Base.MethodList) = search_methods(ms)
+code_search(f::Base.Callable) = search_methods(methods(f))
 code_search(m::Module) = search_methods(module_methods(m))
 
 function code_search(x::T) where T
@@ -120,7 +119,7 @@ macro search(x)
     else
         macrocall = single_macrocall(x)
         if macrocall !== nothing
-            :(code_search(Base.methods($(esc(macrocall)))))
+            :(code_search($(esc(macrocall))))
         else
             Base.gen_call_with_extracted_types(code_search, x)
         end
