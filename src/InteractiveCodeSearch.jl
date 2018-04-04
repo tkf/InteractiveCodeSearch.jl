@@ -70,6 +70,7 @@ maybe_open(x::Tuple{String, Int}) = run_open(x...)
 search_methods(methods) = maybe_open(choose_method(methods))
 
 
+code_search(f, t) = search_methods(methods(f, t))
 code_search(f::Base.Callable) = code_search(methods(f))
 code_search(ms::Base.MethodList) = search_methods(ms)
 code_search(m::Module) = search_methods(module_methods(m))
@@ -121,7 +122,7 @@ macro search(x)
         if macrocall !== nothing
             :(code_search(Base.methods($(esc(macrocall)))))
         else
-            :(@edit $(esc(x)))
+            Base.gen_call_with_extracted_types(code_search, x)
         end
     end
 end
