@@ -1,7 +1,7 @@
 module TestInteractiveCodeSearch
 
 using InteractiveCodeSearch
-using InteractiveCodeSearch: list_locatables, module_methods,
+using InteractiveCodeSearch: list_locatables, module_methods, choose_method,
     read_stdout, parse_loc, single_macrocall
 using Base: find_source_file
 using Base.Test
@@ -56,6 +56,37 @@ end
     @test_nothrow module_methods(Base.Filesystem)
 end
 
+@testset "choose_method" begin
+    single_method = module_methods  # has only one method
+
+    with_config(
+        open = (_...) -> error("must not be called"),
+        interactive_matcher = `echo " at test.jl:249"`,
+        auto_open = true,
+    ) do
+        # when function has only one method, `auto_open` has to kick-in:
+        path, line = choose_method(methods(single_method))
+        @test path isa String
+        @test path != "test.jl"
+        @test line isa Integer
+        @test line != 249
+
+        # `code_search` has several methods, so the matcher has to be called:
+        path, line = choose_method(methods(InteractiveCodeSearch.code_search))
+        @test (path, line) == ("test.jl", 249)
+    end
+
+    with_config(
+        open = (_...) -> error("must not be called"),
+        interactive_matcher = `echo " at test.jl:249"`,
+        auto_open = false,
+    ) do
+        # When `auto_open = false`, the matcher has to be called
+        path, line = choose_method(methods(single_method))
+        @test (path, line) == ("test.jl", 249)
+    end
+end
+
 @testset "single_macrocall" begin
     @test single_macrocall(:(@search)) == Symbol("@search")
     @test single_macrocall(quote @search end) == Symbol("@search")
@@ -70,6 +101,7 @@ end
     with_config(
         interactive_matcher = `echo " at test.jl:249"`,
         open = dummy_openline,
+        auto_open = false,
     ) do
         @test_nothrow @eval @search read_stdout
         @test_nothrow @eval @search @search
