@@ -15,6 +15,21 @@ macro test_nothrow(ex)
     end
 end
 
+function with_config(f; kwargs...)
+    config = deepcopy(InteractiveCodeSearch.CONFIG)
+    try
+        for (name, value) in kwargs
+            setfield!(InteractiveCodeSearch.CONFIG, name, value)
+        end
+        f()
+    finally
+        for name in fieldnames(config)
+            value = getfield(config, name)
+            setfield!(InteractiveCodeSearch.CONFIG, name, value)
+        end
+    end
+end
+
 @testset "read_stdout" begin
     @test strip(String(read_stdout(`cat`, "spam"))) == "spam"
 end
@@ -49,16 +64,13 @@ end
 end
 
 @testset "patched" begin
-    config = deepcopy(InteractiveCodeSearch.CONFIG)
-    try
-        open_args = []
-        dummy_openline(args...) = push!(open_args, args)
+    open_args = []
+    dummy_openline(args...) = push!(open_args, args)
 
-        let c = InteractiveCodeSearch.CONFIG
-            c.interactive_matcher = `echo " at test.jl:249"`
-            c.open = dummy_openline
-        end
-
+    with_config(
+        interactive_matcher = `echo " at test.jl:249"`,
+        open = dummy_openline,
+    ) do
         @test_nothrow @eval @search read_stdout
         @test_nothrow @eval @search @search
         @test_nothrow @eval @search InteractiveCodeSearch
@@ -66,11 +78,6 @@ end
                                   outer=3)
 
         # @show open_args
-    finally
-        let c = InteractiveCodeSearch.CONFIG
-            c.interactive_matcher = config.interactive_matcher
-            c.open = config.open
-        end
     end
 end
 
