@@ -79,8 +79,8 @@ code_search(f, t) = search_methods(methods(f, t))
 code_search(f::Base.Callable) = search_methods(methods(f))
 code_search(m::Module) = search_methods(module_methods(m))
 
-function code_search(x::T) where T
-    warn("Cannot search for $x; searching for its type $T instead...")
+function code_search(::T) where T
+    warn("Cannot search for given value of type $T; searching for its type instead...")
     code_search(T)
 end
 
