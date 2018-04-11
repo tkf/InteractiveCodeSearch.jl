@@ -1,5 +1,5 @@
 module InteractiveCodeSearch
-export @search
+export @search, @searchmethods
 
 using Base: find_source_file
 
@@ -130,6 +130,17 @@ macro search(x)
             Base.gen_call_with_extracted_types(code_search, x)
         end
     end
+end
+
+code_search_methods(T) = search_methods(methodswith(T))
+
+"""
+    @searchmethods x
+
+Interactively search through `methodswith(typeof(x))`.
+"""
+macro searchmethods(x)
+    :(code_search_methods(typeof($x)))
 end
 
 end # module
