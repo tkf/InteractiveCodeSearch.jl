@@ -155,7 +155,14 @@ code_search_methods(T) = search_methods(methodswith(T))
 Interactively search through `methodswith(typeof(x))`.
 """
 macro searchmethods(x)
-    :(code_search_methods(typeof($x)))
+    if x isa Expr && x.head == :(::)
+        if length(x.args) > 1
+            info("Ignoring: $(x.args[1:end-1]...) in $x")
+        end
+        :(code_search_methods($(x.args[end])))
+    else
+        :(code_search_methods(typeof($x)))
+    end
 end
 
 end # module
