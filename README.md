@@ -42,7 +42,7 @@ InteractiveCodeSearch.CONFIG.open = edit  # default
 InteractiveCodeSearch.CONFIG.open = less  # use Base.less to read code
 InteractiveCodeSearch.CONFIG.auto_open = true   # default
 InteractiveCodeSearch.CONFIG.auto_open = false  # open matcher even when there
-                                                # are only one candidate
+                                                # is only one candidate
 ```
 
 
