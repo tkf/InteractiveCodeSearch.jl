@@ -111,6 +111,15 @@ function single_macrocall(x::Expr)
     return nothing
 end
 
+explicitly_typed(::Any) = nothing
+function explicitly_typed(ex::Expr)
+    if ex.head == :call &&
+            all(x isa Expr && x.head == :(::) for x in ex.args[2:end])
+        return ex.args[1], [x.args[end] for x in ex.args[2:end]]
+    end
+    return nothing
+end
+
 """
     @search x
 
@@ -125,10 +134,16 @@ macro search(x)
     else
         macrocall = single_macrocall(x)
         if macrocall !== nothing
-            :(code_search($(esc(macrocall))))
-        else
-            Base.gen_call_with_extracted_types(code_search, x)
+            return :(code_search($(esc(macrocall))))
         end
+
+        func_type = explicitly_typed(x)
+        if func_type !== nothing
+            f, ts = func_type
+            return :(code_search($(esc(f)), tuple($(esc.(ts)...))))
+        end
+
+        Base.gen_call_with_extracted_types(code_search, x)
     end
 end
 
