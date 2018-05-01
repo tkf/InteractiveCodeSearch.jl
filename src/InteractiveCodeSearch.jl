@@ -159,9 +159,9 @@ macro searchmethods(x)
         if length(x.args) > 1
             info("Ignoring: $(x.args[1:end-1]...) in $x")
         end
-        :(code_search_methods($(x.args[end])))
+        :(code_search_methods($(esc(x.args[end]))))
     else
-        :(code_search_methods(typeof($x)))
+        :(code_search_methods(typeof($(esc(x)))))
     end
 end
 
