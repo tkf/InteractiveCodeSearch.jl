@@ -151,8 +151,10 @@ code_search_methods(T) = search_methods(methodswith(T))
 
 """
     @searchmethods x
+    @searchmethods ::X
 
-Interactively search through `methodswith(typeof(x))`.
+Interactively search through `methodswith(typeof(x))` or
+`methodswith(X)`.
 """
 macro searchmethods(x)
     if x isa Expr && x.head == :(::)
