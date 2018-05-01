@@ -36,6 +36,20 @@ module_methods(m::Module) :: Vector{Method} =
     vcat(collect.(methods.(list_locatables(m)))...)
 
 
+struct _Dummy end
+
+function uninteresting_locs()
+    locs = []
+    for m in methods(_Dummy)
+        path = string(m.file)
+        if path != @__FILE__
+            push!(locs, (path, m.line))
+        end
+    end
+    return locs
+end
+
+
 function read_stdout(cmd, input)
     stdout, stdin, process = readandwrite(cmd)
     reader = @async read(stdout)
@@ -55,7 +69,13 @@ run_matcher(input) = String(read_stdout(CONFIG.interactive_matcher, input))
 function choose_method(methods)
     if CONFIG.auto_open && length(methods) == 1
         m = first(methods)
-        return string(m.file), m.line
+        loc = (string(m.file), m.line)
+        if loc in uninteresting_locs()
+            path, lineno = loc
+            info("Not opening uninteresting location: $path:$lineno")
+            return
+        end
+        return loc
     end
     out = run_matcher(join(map(string, methods), "\n"))
     if isempty(out)
