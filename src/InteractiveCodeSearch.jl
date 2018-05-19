@@ -14,6 +14,7 @@ using Base: find_source_file
         :(info($(esc(x))))
     end
 else
+    using InteractiveUtils: edit
     const _fetch = fetch
     allnames(x) = names(x, all=true)
     _ismatch(r, s) = occursin(r, s)
