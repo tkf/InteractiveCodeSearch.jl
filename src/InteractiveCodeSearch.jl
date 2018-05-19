@@ -6,18 +6,15 @@ using Base: find_source_file
 @static if VERSION < v"0.7-"
     const Nothing = Void
     const findall = find
-    const _ismatch = ismatch
+    const occursin = ismatch
     const _readandwrite = readandwrite
-    const _fetch = wait
-    allnames(x) = names(x, true)
+    const fetch = wait
+    names(x; all=false) = Base.names(x, all)
     macro info(x)
         :(info($(esc(x))))
     end
 else
     using InteractiveUtils: edit
-    const _fetch = fetch
-    allnames(x) = names(x, all=true)
-    _ismatch(r, s) = occursin(r, s)
     function _readandwrite(cmds)
         processes = open(cmds, "r+")
         return (processes.out, processes.in, processes)
@@ -30,14 +27,14 @@ mutable struct SearchConfig  # CONFIG
     auto_open
 end
 
-is_identifier(s) = _ismatch(r"^@?[a-z_]+$"i, string(s))
+is_identifier(s) = occursin(r"^@?[a-z_]+$"i, string(s))
 
 is_locatables(::Any) = false
 is_locatables(::Base.Callable) = true
 
 function list_locatables(m::Module)
     locs = []
-    for s in allnames(m)
+    for s in names(m; all=true)
         if is_identifier(s)
             x = try
                 getfield(m, s)
@@ -76,7 +73,7 @@ function read_stdout(cmd, input)
     reader = @async read(stdout)
     write(stdin, input)
     close(stdin)
-    return _fetch(reader)
+    return fetch(reader)
 end
 
 function parse_loc(line)
