@@ -29,7 +29,7 @@ function with_config(f; kwargs...)
         end
         f()
     finally
-        for name in fieldnames(config)
+        for name in fieldnames(typeof(config))
             value = getfield(config, name)
             setfield!(InteractiveCodeSearch.CONFIG, name, value)
         end

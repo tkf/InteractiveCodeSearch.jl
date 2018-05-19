@@ -10,10 +10,13 @@ using Base: find_source_file
     const _readandwrite = readandwrite
     const _fetch = wait
     allnames(x) = names(x, true)
+    macro info(x)
+        :(info($(esc(x))))
+    end
 else
     const _fetch = fetch
     allnames(x) = names(x, all=true)
-    _ismatch(r, s) = contains(s, r)
+    _ismatch(r, s) = occursin(r, s)
     function _readandwrite(cmds)
         processes = open(cmds, "r+")
         return (processes.out, processes.in, processes)
@@ -89,7 +92,7 @@ function choose_method(methods)
         loc = (string(m.file), m.line)
         if loc in uninteresting_locs()
             path, lineno = loc
-            info("Not opening uninteresting location: $path:$lineno")
+            @info "Not opening uninteresting location: $path:$lineno"
             return
         end
         return loc
@@ -102,7 +105,7 @@ function choose_method(methods)
 end
 
 function run_open(path, lineno)
-    info("Opening $path:$lineno")
+    @info "Opening $path:$lineno"
     CONFIG.open(find_source_file(path), lineno)
 end
 
@@ -196,7 +199,7 @@ Interactively search through `methodswith(typeof(x))` or
 macro searchmethods(x)
     if x isa Expr && x.head == :(::)
         if length(x.args) > 1
-            info("Ignoring: $(x.args[1:end-1]...) in $x")
+            @info "Ignoring: $(x.args[1:end-1]...) in $x"
         end
         :(code_search_methods($(esc(x.args[end]))))
     else
