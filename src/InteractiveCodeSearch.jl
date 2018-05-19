@@ -1,7 +1,7 @@
 module InteractiveCodeSearch
 export @search, @searchmethods
 
-using Base: find_source_file
+using Base
 
 @static if VERSION < v"0.7-"
     const Nothing = Void
@@ -14,6 +14,7 @@ using Base: find_source_file
         :(info($(esc(x))))
     end
 else
+    import Pkg
     using InteractiveUtils: edit
     function _readandwrite(cmds)
         processes = open(cmds, "r+")
@@ -65,6 +66,40 @@ function uninteresting_locs()
         end
     end
     return locs
+end
+
+
+"""
+    find_source_file(file)
+
+Find source `file` and return its full path.  It just calls
+`Base.find_source_file` and return its result for normal Julia
+installation.  For nightly Julia build, it tries to guess the right
+path when `Base.find_source_file` failed.
+"""
+function find_source_file(file)
+    path = Base.find_source_file(file)
+    if path isa AbstractString && ! isfile(path)
+        for m in methods(Pkg.add)
+            exfile = try
+                String(m.file)
+            catch err
+                continue
+            end
+            idx = findlast(joinpath(Base.Filesystem.path_separator,
+                                    "share", "julia"), exfile)
+            if idx isa Nothing
+                continue
+            end
+            prefix = exfile[1:idx[1]]
+            if startswith(file, prefix)
+                # e.g., relpath = "share/julia/stdlib/v0.7/..."
+                relpath = file[length(prefix)+1:end]
+                return joinpath(Base.Sys.BINDIR, "..", relpath)
+            end
+        end
+    end
+    return path
 end
 
 
