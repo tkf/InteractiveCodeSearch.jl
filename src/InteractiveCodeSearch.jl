@@ -30,8 +30,8 @@ end
 
 is_identifier(s) = occursin(r"^@?[a-z_]+$"i, string(s))
 
-is_locatables(::Any) = false
-is_locatables(::Base.Callable) = true
+is_locatable(::Any) = false
+is_locatable(::Base.Callable) = true
 
 function list_locatables(m::Module)
     locs = []
@@ -43,7 +43,7 @@ function list_locatables(m::Module)
                 err isa UndefVarError && continue
                 rethrow()
             end
-            if is_locatables(x)
+            if is_locatable(x)
                 push!(locs, x)
             end
         end
