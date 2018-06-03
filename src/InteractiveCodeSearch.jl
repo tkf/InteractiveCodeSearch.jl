@@ -13,9 +13,10 @@ using Base
     macro info(x)
         :(info($(esc(x))))
     end
+    using Base: gen_call_with_extracted_types
 else
     import Pkg
-    using InteractiveUtils: edit
+    using InteractiveUtils: edit, gen_call_with_extracted_types
     function _readandwrite(cmds)
         processes = open(cmds, "r+")
         return (processes.out, processes.in, processes)
@@ -216,7 +217,11 @@ macro search(x)
             return :(code_search($(esc(f)), tuple($(esc.(ts)...))))
         end
 
-        Base.gen_call_with_extracted_types(code_search, x)
+        if VERSION < v"0.7-"
+            gen_call_with_extracted_types(code_search, x)
+        else
+            gen_call_with_extracted_types(__module__, code_search, x)
+        end
     end
 end
 
