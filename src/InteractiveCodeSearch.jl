@@ -15,6 +15,9 @@ using Base
     macro info(x)
         :(info($(esc(x))))
     end
+    macro warn(x)
+        :(warn($(esc(x))))
+    end
     using Base: gen_call_with_extracted_types
 else
     import Pkg
@@ -156,7 +159,8 @@ code_search(f::Base.Callable) = search_methods(methods(f))
 code_search(m::Module) = search_methods(module_methods(m))
 
 function code_search(::T) where T
-    warn("Cannot search for given value of type $T; searching for its type instead...")
+    @warn """Cannot search for given value of type $T
+             Searching for its type instead..."""
     code_search(T)
 end
 
@@ -217,6 +221,10 @@ macro search(x)
         if func_type !== nothing
             f, ts = func_type
             return :(code_search($(esc(f)), tuple($(esc.(ts)...))))
+        end
+
+        if x isa String
+            return :(code_search($(esc(x))))
         end
 
         if VERSION < v"0.7-"
