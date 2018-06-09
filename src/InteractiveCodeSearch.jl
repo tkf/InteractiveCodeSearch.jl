@@ -172,11 +172,7 @@ const CONFIG = SearchConfig(
 
 isline(::Any) = false
 isline(ex::Expr) = ex.head == :line
-try
-    @eval isline(::LineNumberNode) = true
-catch err
-    err isa UndefVarError || rethrow()
-end
+isline(::LineNumberNode) = true
 
 single_macrocall(::Any) = nothing
 function single_macrocall(x::Expr)
