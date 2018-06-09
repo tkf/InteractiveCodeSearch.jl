@@ -86,6 +86,10 @@ end
         # `code_search` has several methods, so the matcher has to be called:
         path, line = choose_method(methods(InteractiveCodeSearch.code_search))
         @test (path, line) == ("test.jl", 249)
+
+        # "Not opening uninteresting location"
+        chosen = choose_method(methods(InteractiveCodeSearch._Dummy, (Any,)))
+        @eval @test ($chosen) === nothing
     end
 
     with_config(
