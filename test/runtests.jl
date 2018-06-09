@@ -12,6 +12,12 @@ catch err
     @eval using Base.Test
 end
 
+try
+    @eval import Pkg
+catch err
+    err isa ArgumentError || rethrow()
+end
+
 macro test_nothrow(ex)
     quote
         @test begin
@@ -91,6 +97,13 @@ end
         path, line = choose_method(methods(single_method))
         @test (path, line) == ("test.jl", 249)
     end
+end
+
+@testset "find_source_file" begin
+    m = first(methods(Pkg.clone))
+    file = string(m.file)
+    found = InteractiveCodeSearch.find_source_file(file)
+    @eval @test isfile($found)
 end
 
 @testset "single_macrocall" begin
