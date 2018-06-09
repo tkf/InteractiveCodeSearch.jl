@@ -18,7 +18,7 @@ using Base
     using Base: gen_call_with_extracted_types
 else
     import Pkg
-    using InteractiveUtils: edit, gen_call_with_extracted_types
+    using InteractiveUtils: edit, gen_call_with_extracted_types, methodswith
     function _readandwrite(cmds)
         processes = open(cmds, "r+")
         return (processes.out, processes.in, processes)
