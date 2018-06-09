@@ -138,6 +138,14 @@ end
 
         # @show open_args
     end
+
+    with_config(
+        interactive_matcher = `true`,
+        open = (args...) -> error("open must not be called"),
+        auto_open = false,
+    ) do
+        @test_nothrow @eval @search read_stdout
+    end
 end
 
 end  # module
