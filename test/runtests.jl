@@ -125,13 +125,16 @@ end
         @test_nothrow @eval @search read_stdout
         @test_nothrow @eval @search read_stdout(`cat`, "hello")
         @test_nothrow @eval @search read_stdout(::Cmd)
+        @test_nothrow @eval @search read_stdout(`cat`::Cmd)
         @test_nothrow @eval @search @search
+        @test_nothrow @eval @search @search(read_stdout)
         @test_nothrow @eval @search ""
         @test_nothrow @eval @search InteractiveCodeSearch
         @test_nothrow @eval @searchmethods InteractiveCodeSearch.CONFIG
         @test_nothrow @eval @searchmethods ::InteractiveCodeSearch.SearchConfig
+        @test_nothrow @eval @searchmethods c::InteractiveCodeSearch.SearchConfig
         @test open_args == repeat([(find_source_file("test.jl"), 249)],
-                                  outer=8)
+                                  outer=11)
 
         # @show open_args
     end
