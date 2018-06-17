@@ -170,6 +170,10 @@ const CONFIG = SearchConfig(
     true,                       # auto_open
 )
 
+should_eval(::Any) = false
+should_eval(::Symbol) = true
+should_eval(ex::Expr) = ex.head in (:., :ref)
+
 isline(::Any) = false
 isline(ex::Expr) = ex.head == :line
 isline(::LineNumberNode) = true
@@ -205,7 +209,7 @@ and then open the chosen location in the editor.
 See also `?InteractiveCodeSearch`
 """
 macro search(x)
-    if x isa Symbol || x isa Expr && x.head == :.
+    if should_eval(x)
         :(code_search($(esc(x))))
     else
         macrocall = single_macrocall(x)
