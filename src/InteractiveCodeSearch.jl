@@ -173,6 +173,11 @@ const CONFIG = SearchConfig(
 should_eval(::Any) = false
 should_eval(::Symbol) = true
 should_eval(ex::Expr) = ex.head in (:., :ref)
+# Given (say) `a.b[c].d[e]` It probably is better to only eval
+# `a.b[c].d` and then search for `getindex(a.b[c].d, e)`.  But it's
+# (1) a bit harder to implement and (2) evaluating the whole
+# expression is still useful.  So let's keep the current
+# implementation for a while.
 
 isliteral(::Symbol) = false
 isliteral(::Expr) = false
