@@ -210,9 +210,14 @@ end
 List file locations at which `x` are defined in an interactive matcher
 and then open the chosen location in the editor.
 
+    @search
+
+If no expression is provided, search for the method returned by the
+previous execution; i.e., `x` defaults to `ans`.
+
 See also `?InteractiveCodeSearch`
 """
-macro search(x)
+macro search(x = :ans)
     if should_eval(x)
         return :(code_search($(esc(x))))
     end
