@@ -174,6 +174,10 @@ should_eval(::Any) = false
 should_eval(::Symbol) = true
 should_eval(ex::Expr) = ex.head in (:., :ref)
 
+isliteral(::Symbol) = false
+isliteral(::Expr) = false
+isliteral(::Any) = true
+
 isline(::Any) = false
 isline(ex::Expr) = ex.head == :line
 isline(::LineNumberNode) = true
@@ -224,7 +228,13 @@ macro search(x)
         return :(code_search($(esc(f)), tuple($(esc.(ts)...))))
     end
 
-    if x isa String
+    # Since `gen_call_with_extracted_types` does not handle literals,
+    # let's handle this case here (although there are not much can be
+    # done).
+    if isliteral(x)
+        # Examples:
+        #   @search ""
+        #   @search 1
         return :(code_search($(esc(x))))
     end
 

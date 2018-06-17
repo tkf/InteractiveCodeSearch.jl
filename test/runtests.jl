@@ -2,7 +2,7 @@ module TestInteractiveCodeSearch
 
 using InteractiveCodeSearch
 using InteractiveCodeSearch: list_locatables, module_methods, choose_method,
-    read_stdout, parse_loc, single_macrocall
+    read_stdout, parse_loc, single_macrocall, isliteral
 using Base: find_source_file
 
 try
@@ -110,6 +110,14 @@ end
     @eval @test isfile($found)
 end
 
+@testset "isliteral" begin
+    @test isliteral(1)
+    @test isliteral(1.0)
+    @test isliteral("1")
+    @test ! isliteral(:a)
+    @test ! isliteral(:(a + b))
+end
+
 @testset "single_macrocall" begin
     @test single_macrocall(:(@search)) == Symbol("@search")
     @test single_macrocall(quote @search end) == Symbol("@search")
@@ -133,12 +141,13 @@ end
         @test_nothrow @eval @search @search
         @test_nothrow @eval @search @search(read_stdout)
         @test_nothrow @eval @search ""
+        @test_nothrow @eval @search 1
         @test_nothrow @eval @search InteractiveCodeSearch
         @test_nothrow @eval @searchmethods InteractiveCodeSearch.CONFIG
         @test_nothrow @eval @searchmethods ::InteractiveCodeSearch.SearchConfig
         @test_nothrow @eval @searchmethods c::InteractiveCodeSearch.SearchConfig
         @test open_args == repeat([(find_source_file("test.jl"), 249)],
-                                  outer=11)
+                                  outer=12)
 
         # @show open_args
     end
