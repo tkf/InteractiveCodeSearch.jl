@@ -210,28 +210,28 @@ See also `?InteractiveCodeSearch`
 """
 macro search(x)
     if should_eval(x)
-        :(code_search($(esc(x))))
+        return :(code_search($(esc(x))))
+    end
+
+    macrocall = single_macrocall(x)
+    if macrocall !== nothing
+        return :(code_search($(esc(macrocall))))
+    end
+
+    func_type = explicitly_typed(x)
+    if func_type !== nothing
+        f, ts = func_type
+        return :(code_search($(esc(f)), tuple($(esc.(ts)...))))
+    end
+
+    if x isa String
+        return :(code_search($(esc(x))))
+    end
+
+    if VERSION < v"0.7-"
+        gen_call_with_extracted_types(code_search, x)
     else
-        macrocall = single_macrocall(x)
-        if macrocall !== nothing
-            return :(code_search($(esc(macrocall))))
-        end
-
-        func_type = explicitly_typed(x)
-        if func_type !== nothing
-            f, ts = func_type
-            return :(code_search($(esc(f)), tuple($(esc.(ts)...))))
-        end
-
-        if x isa String
-            return :(code_search($(esc(x))))
-        end
-
-        if VERSION < v"0.7-"
-            gen_call_with_extracted_types(code_search, x)
-        else
-            gen_call_with_extracted_types(__module__, code_search, x)
-        end
+        gen_call_with_extracted_types(__module__, code_search, x)
     end
 end
 
