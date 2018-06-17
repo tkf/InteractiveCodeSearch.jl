@@ -220,21 +220,44 @@ and then open the chosen location in the editor.
 If no expression is provided, search for the method returned by the
 previous execution; i.e., `x` defaults to `ans`.
 
-See also `?InteractiveCodeSearch`
+# Examples
+```
+@search show                      # all method definitions
+@search @time                     # all macro definitions
+@search Base.REPL                 # methods and macros in a module
+@search *(::Integer, ::Integer)   # methods with specified types
+@search dot(π, ℯ)                 # methods with inferred types
+```
+
+Note that `@search` evaluates complex expression with `.` and `[]`
+such as follows and search the returned value or the type of it:
+```
+@search Base.Multimedia.displays[2].repl
+```
 """
 macro search(x = :ans)
     if should_eval(x)
+        # Examples:
+        #   @search show
+        #   @search Base.REPL
+        #   @search Base.Multimedia.displays[2].repl
         return :(code_search($(esc(x))))
     end
 
     macrocall = single_macrocall(x)
     if macrocall !== nothing
+        # Examples:
+        #   @search @time
+        #   @search begin @time end
         return :(code_search($(esc(macrocall))))
     end
 
     func_type = explicitly_typed(x)
     if func_type !== nothing
         f, ts = func_type
+        # Examples:
+        #   @search *(::Integer, ::Integer)
+        #   @search dot(::AbstractVector, ::SparseVector)
         return :(code_search($(esc(f)), tuple($(esc.(ts)...))))
     end
 
@@ -248,6 +271,9 @@ macro search(x = :ans)
         return :(code_search($(esc(x))))
     end
 
+    # Examples:
+    #   @search 1 * 2
+    #   @search dot([], [])
     if VERSION < v"0.7-"
         gen_call_with_extracted_types(code_search, x)
     else
