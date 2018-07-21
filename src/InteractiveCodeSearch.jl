@@ -109,11 +109,23 @@ function find_source_file(file)
 end
 
 
+"""
+    read_stdout(cmd, input)
+
+Julia implementation of "echo {input} | {cmd}".
+"""
 function read_stdout(cmd, input)
     stdout, stdin, process = _readandwrite(cmd)
     reader = @async read(stdout)
-    write(stdin, input)
-    close(stdin)
+    try
+        write(stdin, input)
+    catch err
+        if ! (err isa Base.UVError)
+            rethrow()
+        end
+    finally
+        close(stdin)
+    end
     return fetch(reader)
 end
 
