@@ -6,6 +6,7 @@ export @search, @searchmethods
 using Base
 
 @static if VERSION < v"0.7-"
+    const IOError = Base.UVError
     const Nothing = Void
     const findall = find
     const occursin = ismatch
@@ -21,6 +22,7 @@ using Base
     using Base: gen_call_with_extracted_types
 else
     import Pkg
+    using Base: IOError
     using InteractiveUtils: edit, gen_call_with_extracted_types, methodswith
     function _readandwrite(cmds)
         processes = open(cmds, "r+")
@@ -120,7 +122,7 @@ function read_stdout(cmd, input)
     try
         write(stdin, input)
     catch err
-        if ! (err isa Base.UVError)
+        if ! (err isa IOError)
             rethrow()
         end
     finally
