@@ -140,6 +140,10 @@ end
 run_matcher(input) = String(read_stdout(CONFIG.interactive_matcher, input))
 
 function choose_method(methods)
+    if isempty(methods)
+        @info "No (interesting) method found"
+        return
+    end
     if CONFIG.auto_open && length(methods) == 1
         m = first(methods)
         loc = (string(m.file), m.line)
