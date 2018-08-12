@@ -6,9 +6,10 @@
 
 ![gif animation](search.gif "Searching code using @search")
 
-Julia has `@edit` and `@less` which are very handy for reading the
+Julia has `@edit`, `@less`, etc. which are very handy for reading the
 implementation of functions.  However, you need to specify a "good
-enough" (type) parameters for it to find the location of the code.
+enough" set of (type) parameters for them to find the location of the
+code.
 
 Instead, `InteractiveCodeSearch` provides a way to interactively
 choose the code you want to read.
@@ -50,11 +51,12 @@ InteractiveCodeSearch.CONFIG.auto_open = false  # open matcher even when there
 
 ## Using InteractiveCodeSearch.jl by default
 
-Use the same trick as [Revise.jl](https://github.com/timholy/Revise.jl); i.e.,
-put the following code in your `.juliarc.jl`:
+Use the same trick as
+[Revise.jl](https://github.com/timholy/Revise.jl/tree/v0.6); i.e., put
+the following code in your `.juliarc.jl`:
 
 ```julia
-@schedule begin
+@async begin
     sleep(0.1)
     @eval using InteractiveCodeSearch
 end
