@@ -56,7 +56,8 @@ InteractiveCodeSearch.CONFIG.auto_open = false  # open matcher even when there
 
 Use the same trick as
 [Revise.jl](https://github.com/timholy/Revise.jl/tree/v0.6); i.e., put
-the following code in your `.juliarc.jl`:
+the following code in your `~/.julia/config/startup.jl` (>= Julia 0.7)
+or `~/.juliarc.jl` (Julia 0.6):
 
 ```julia
 @async begin
