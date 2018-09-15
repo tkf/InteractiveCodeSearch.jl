@@ -33,6 +33,7 @@ using InteractiveCodeSearch
 * Interactive matching command.  For example:
   * [peco](https://github.com/peco/peco)
   * [percol](https://github.com/mooz/percol)
+  * [rofi](https://github.com/DaveDavenport/rofi) (GUI)
 
 
 ## Configuration
@@ -41,6 +42,8 @@ using InteractiveCodeSearch
 using InteractiveCodeSearch
 InteractiveCodeSearch.CONFIG.interactive_matcher = `peco`    # default
 InteractiveCodeSearch.CONFIG.interactive_matcher = `percol`
+InteractiveCodeSearch.CONFIG.interactive_matcher =
+    `rofi -dmenu -i -p "🔎" -fullscreen`  # use GUI matcher
 InteractiveCodeSearch.CONFIG.open = edit  # default
 InteractiveCodeSearch.CONFIG.open = less  # use Base.less to read code
 InteractiveCodeSearch.CONFIG.auto_open = true   # default
