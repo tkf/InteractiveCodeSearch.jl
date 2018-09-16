@@ -430,4 +430,8 @@ function __init__()
     CONFIG.interactive_matcher = choose_interactive_matcher()
 end
 
+@static if VERSION >= v"0.7-"
+    include("history.jl")
+end
+
 end # module
