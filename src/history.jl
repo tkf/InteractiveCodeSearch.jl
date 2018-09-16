@@ -54,10 +54,14 @@ end
 
 function write_transformed_history(io::IO,
                                    hp = get_history_provider())
+    seen = Set(String[])
     for (mode, code) in Iterators.reverse(zip(hp.modes, hp.history))
         if mode == :julia
-            write(io, escape_history(code))
-            write(io, "\n")
+            if !(code in seen)
+                write(io, escape_history(code))
+                write(io, "\n")
+                push!(seen, code)
+            end
         end
     end
 end
