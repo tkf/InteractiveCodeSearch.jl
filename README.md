@@ -27,7 +27,11 @@ using InteractiveCodeSearch
 @searchmethods 1         # search methods defined for integer
 @searchmethods ::Int     # search methods defined for a specified type
 @searchhistory           # search history (Julia >= 0.7)
+@searchreturn String Pkg # search methods returning a given type (Julia >= 0.7)
 ```
+
+First run of `@searchreturn` for a large package like `LinearAlgebra`
+may be slow (~ 1 minute).
 
 
 ## Requirements

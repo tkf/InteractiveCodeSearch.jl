@@ -171,7 +171,15 @@ end
 
 run_matcher(input) = String(read_stdout(input, CONFIG.interactive_matcher))
 
-function choose_method(methods)
+choose_method(methods::T) where T =
+    _choose_method(Base.IteratorSize(T), methods)
+
+@static if VERSION < v"0.7-"
+    choose_method(methods::Union{Base.MethodList, AbstractVector}) =
+        _choose_method(Base.HasLength(), methods)
+end
+
+function _choose_method(::Base.HasLength, methods)
     if isempty(methods)
         @info "No (interesting) method found"
         return
@@ -186,6 +194,10 @@ function choose_method(methods)
         end
         return loc
     end
+    return _choose_method(Base.SizeUnknown(), methods)
+end
+
+function _choose_method(::Base.IteratorSize, methods)
     out = run_matcher() do stdin
         for m in methods
             show(stdin, m)
@@ -444,6 +456,7 @@ end
 
 @static if VERSION >= v"0.7-"
     include("history.jl")
+    include("return.jl")
 end
 
 end # module
