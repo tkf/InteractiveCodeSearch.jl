@@ -186,7 +186,12 @@ function choose_method(methods)
         end
         return loc
     end
-    out = run_matcher(join(map(string, methods), "\n"))
+    out = run_matcher() do stdin
+        for m in methods
+            show(stdin, m)
+            println(stdin)
+        end
+    end
     if isempty(out)
         return
     end
