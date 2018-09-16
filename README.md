@@ -41,10 +41,13 @@ using InteractiveCodeSearch
 
 ```julia
 using InteractiveCodeSearch
-InteractiveCodeSearch.CONFIG.interactive_matcher = `peco`    # default
+InteractiveCodeSearch.CONFIG.interactive_matcher = `peco`  # default in terminal
 InteractiveCodeSearch.CONFIG.interactive_matcher = `percol`
 InteractiveCodeSearch.CONFIG.interactive_matcher =
-    `rofi -dmenu -i -p "🔎" -fullscreen`  # use GUI matcher
+    `rofi -dmenu -i -p "🔎"`  # use GUI matcher (default in non-terminal
+                              # environment like IJulia)
+InteractiveCodeSearch.CONFIG.interactive_matcher =
+    `rofi -dmenu -i -p "🔎" -fullscreen`  # bigger screen
 InteractiveCodeSearch.CONFIG.open = edit  # default
 InteractiveCodeSearch.CONFIG.open = less  # use Base.less to read code
 InteractiveCodeSearch.CONFIG.auto_open = true   # default

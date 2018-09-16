@@ -20,6 +20,15 @@ using Base
         :(warn($(esc(x))))
     end
     using Base: gen_call_with_extracted_types
+    @eval module Sys
+        function which(program::AbstractString)
+            try
+                strip(readstring(`which $program`))
+            catch
+                nothing
+            end
+        end
+    end  # module
 else
     import Pkg
     using Base: IOError
@@ -359,6 +368,62 @@ macro searchmethods(x)
     else
         :(code_search_methods(typeof($(esc(x)))))
     end
+end
+
+const preferred_terminal = Cmd[
+    `peco`,
+    `percol`,
+]
+
+const preferred_gui = Cmd[
+    `rofi -dmenu -i -p "🔎"`,
+    # what else?
+]
+
+function need_gui(stdstreams = [
+                      (@static VERSION < v"0.7-" ? STDOUT : stdout),
+                      (@static VERSION < v"0.7-" ? STDIN : stdin),
+                  ])
+    return !all(isa.(stdstreams, Ref(Base.TTY)))
+end
+
+function choose_preferred_command(commands::Vector{Cmd})
+    for cmd in commands
+        if Sys.which(cmd[1]) !== nothing
+            return cmd
+        end
+    end
+    return nothing
+end
+
+function choose_preferred_command(f, commands::Vector{Cmd})
+    cmd = choose_preferred_command(commands)
+    if cmd !== nothing
+        return cmd
+    else
+        return f()
+    end
+end
+
+function choose_interactive_matcher(;
+        preferred_terminal = preferred_terminal,
+        preferred_gui = preferred_gui,
+        gui = need_gui())
+    if gui
+        return choose_preferred_command(preferred_gui) do
+            return preferred_gui[1]
+        end
+    else
+        return choose_preferred_command(preferred_terminal) do
+            return choose_preferred_command(preferred_gui) do
+                return preferred_terminal[1]
+            end
+        end
+    end
+end
+
+function __init__()
+    CONFIG.interactive_matcher = choose_interactive_matcher()
 end
 
 end # module
