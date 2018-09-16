@@ -1,7 +1,8 @@
 module TestInteractiveCodeSearch
 
 using InteractiveCodeSearch
-using InteractiveCodeSearch: list_locatables, module_methods, choose_method,
+using InteractiveCodeSearch:
+    Shallow, Recursive, list_locatables, module_methods, choose_method,
     read_stdout, parse_loc, single_macrocall, isliteral
 using Base: find_source_file
 
@@ -51,8 +52,15 @@ end
         ("test.jl", 249)
 end
 
+module ModuleA
+    module ModuleB
+        b() = nothing
+    end
+    a() = nothing
+end
+
 @testset "list_locatables" begin
-    locs = Set(list_locatables(InteractiveCodeSearch))
+    locs = Set(list_locatables(Shallow(), InteractiveCodeSearch))
     @test Set([
         InteractiveCodeSearch.list_locatables,
         InteractiveCodeSearch.module_methods,
@@ -61,11 +69,21 @@ end
         InteractiveCodeSearch.search_methods,
         getfield(InteractiveCodeSearch, Symbol("@search")),
     ]) <= locs
+
+    locs = Set(list_locatables(Shallow(), ModuleA))
+    @test locs >= Set(Any[ModuleA.a])
+    locs = Set(list_locatables(Shallow(), ModuleA.ModuleB))
+    @test locs >= Set(Any[ModuleA.ModuleB.b])
+    locs = Set(list_locatables(Recursive(), ModuleA))
+    @test locs >= Set(Any[ModuleA.a, ModuleA.ModuleB.b])
 end
 
 @testset "module_methods" begin
-    @test_nothrow module_methods(InteractiveCodeSearch)
-    @test_nothrow module_methods(Base.Filesystem)
+    @testset for
+            p in [Shallow(), Recursive()],
+            m in [InteractiveCodeSearch, Base.Filesystem]
+        @test_nothrow module_methods(p, m)
+    end
 end
 
 @testset "choose_method" begin

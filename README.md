@@ -22,6 +22,7 @@ using InteractiveCodeSearch
 @search show             # search method definitions
 @search @time            # search macro definitions
 @search Base.Enums       # search methods and macros in a module
+@search REPL :r          # search the module recursively
 @search *(::Int, ::Int)  # search methods with specified type
 @searchmethods 1         # search methods defined for integer
 @searchmethods ::Int     # search methods defined for a specified type

@@ -30,6 +30,11 @@ else
     end
 end
 
+abstract type SearchPolicy end
+struct Shallow <: SearchPolicy end
+struct Recursive <: SearchPolicy end
+
+
 mutable struct SearchConfig  # CONFIG
     open
     interactive_matcher
@@ -41,7 +46,14 @@ is_identifier(s) = occursin(r"^@?[a-z_]+$"i, string(s))
 is_locatable(::Any) = false
 is_locatable(::Base.Callable) = true
 
-function list_locatables(m::Module)
+@static if VERSION < v"0.7-"
+    is_defined_in(_...) = false
+else
+    is_defined_in(child, parent) =
+        child !== parent && parentmodule(child) === parent
+end
+
+function list_locatables(p::SearchPolicy, m::Module)
     locs = []
     for s in names(m; all=true)
         if is_identifier(s)
@@ -53,14 +65,16 @@ function list_locatables(m::Module)
             end
             if is_locatable(x)
                 push!(locs, x)
+            elseif p isa Recursive && x isa Module && is_defined_in(x, m)
+                append!(locs, list_locatables(p, x))
             end
         end
     end
     return locs
 end
 
-module_methods(m::Module) :: Vector{Method} =
-    vcat(collect.(methods.(list_locatables(m)))...)
+module_methods(p::SearchPolicy, m::Module) :: Vector{Method} =
+    vcat(collect.(methods.(list_locatables(p, m)))...)
 # Note: the conversion `:: Vector{Method}` seems to be required only
 # for Julia 0.6.
 
@@ -174,14 +188,15 @@ maybe_open(x::Tuple{String, Integer}) = run_open(x...)
 search_methods(methods) = maybe_open(choose_method(methods))
 
 
-code_search(f, t) = search_methods(methods(f, t))
-code_search(f::Base.Callable) = search_methods(methods(f))
-code_search(m::Module) = search_methods(module_methods(m))
+code_search_typed(f, t) = search_methods(methods(f, t))
 
-function code_search(::T) where T
+code_search(::SearchPolicy, f::Base.Callable) = search_methods(methods(f))
+code_search(p::SearchPolicy, m::Module) = search_methods(module_methods(p, m))
+
+function code_search(p::SearchPolicy, ::T) where T
     @warn """Cannot search for given value of type $T
              Searching for its type instead..."""
-    code_search(T)
+    code_search(p, T)
 end
 
 const CONFIG = SearchConfig(
@@ -229,11 +244,24 @@ function explicitly_typed(ex::Expr)
     return nothing
 end
 
+function parse_search_policy(flag)
+    if flag in :(:shallow, :s).args
+        return Shallow()
+    elseif flag in :(:recursive, :r).args
+        return Recursive()
+    end
+    error("Invalid flag $flag")
+end
+
 """
-    @search x
+    @search x [:shallow | :s | :recursive | :r]
 
 List file locations at which `x` are defined in an interactive matcher
 and then open the chosen location in the editor.
+
+When `x` is a module, only the top-level definitions are searched.  To
+search all definitions in the submodule, pass `:recursive` or `:r`
+flag.
 
     @search
 
@@ -245,6 +273,7 @@ previous execution; i.e., `x` defaults to `ans`.
 @search show                      # all method definitions
 @search @time                     # all macro definitions
 @search Base.Enums                # methods and macros in a module
+@search REPL :r                   # search the module recursively
 @search *(::Integer, ::Integer)   # methods with specified types
 @search dot(π, ℯ)                 # methods with inferred types
 ```
@@ -255,13 +284,15 @@ such as follows and search the returned value or the type of it:
 @search Base.Multimedia.displays[2].repl
 ```
 """
-macro search(x = :ans)
+macro search(x = :ans, flag = :(:shallow))
+    p = parse_search_policy(flag)
+
     if should_eval(x)
         # Examples:
         #   @search show
         #   @search Base.Enums
         #   @search Base.Multimedia.displays[2].repl
-        return :(code_search($(esc(x))))
+        return :(code_search($p, $(esc(x))))
     end
 
     macrocall = single_macrocall(x)
@@ -269,7 +300,7 @@ macro search(x = :ans)
         # Examples:
         #   @search @time
         #   @search begin @time end
-        return :(code_search($(esc(macrocall))))
+        return :(code_search($p, $(esc(macrocall))))
     end
 
     func_type = explicitly_typed(x)
@@ -278,7 +309,7 @@ macro search(x = :ans)
         # Examples:
         #   @search *(::Integer, ::Integer)
         #   @search dot(::AbstractVector, ::SparseVector)
-        return :(code_search($(esc(f)), tuple($(esc.(ts)...))))
+        return :(code_search_typed($(esc(f)), tuple($(esc.(ts)...))))
     end
 
     # Since `gen_call_with_extracted_types` does not handle literals,
@@ -288,16 +319,16 @@ macro search(x = :ans)
         # Examples:
         #   @search ""
         #   @search 1
-        return :(code_search($(esc(x))))
+        return :(code_search($p, $(esc(x))))
     end
 
     # Examples:
     #   @search 1 * 2
     #   @search dot([], [])
     if VERSION < v"0.7-"
-        gen_call_with_extracted_types(code_search, x)
+        gen_call_with_extracted_types(code_search_typed, x)
     else
-        gen_call_with_extracted_types(__module__, code_search, x)
+        gen_call_with_extracted_types(__module__, code_search_typed, x)
     end
 end
 
