@@ -137,15 +137,22 @@ end
 
 
 """
-    read_stdout(cmd, input)
+    read_stdout(input::AbstractString, cmd)
+    read_stdout(input_provider, cmd)
 
 Julia implementation of "echo {input} | {cmd}".
 """
-function read_stdout(cmd, input)
+function read_stdout(input::AbstractString, cmd)
+    read_stdout(cmd) do stdin
+        write(stdin, input)
+    end
+end
+
+function read_stdout(input_provider, cmd)
     stdout, stdin, process = _readandwrite(cmd)
     reader = @async read(stdout)
     try
-        write(stdin, input)
+        input_provider(stdin)
     catch err
         if ! (err isa IOError)
             rethrow()
@@ -162,7 +169,7 @@ function parse_loc(line)
     return String(path), parse(Int, lineno)
 end
 
-run_matcher(input) = String(read_stdout(CONFIG.interactive_matcher, input))
+run_matcher(input) = String(read_stdout(input, CONFIG.interactive_matcher))
 
 function choose_method(methods)
     if isempty(methods)

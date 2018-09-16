@@ -106,9 +106,7 @@ function set_next_input(code::AbstractString)
 end
 
 function searchhistory()
-    buf = IOBuffer()
-    write_transformed_history(buf)
-    result = run_matcher(String(take!(buf)))
+    result = run_matcher(write_transformed_history)
     set_next_input(rstrip(unescape_history(result)))
     return nothing
 end

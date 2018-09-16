@@ -44,7 +44,8 @@ function with_config(f; kwargs...)
 end
 
 @testset "read_stdout" begin
-    @test strip(String(read_stdout(`cat`, "spam"))) == "spam"
+    @test strip(String(read_stdout("spam", `cat`))) == "spam"
+    @test strip(String(read_stdout(io -> write(io, "egg"), `cat`))) == "egg"
 end
 
 @testset "parse_loc" begin
