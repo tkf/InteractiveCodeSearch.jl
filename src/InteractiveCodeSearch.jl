@@ -242,7 +242,7 @@ previous execution; i.e., `x` defaults to `ans`.
 ```
 @search show                      # all method definitions
 @search @time                     # all macro definitions
-@search Base.REPL                 # methods and macros in a module
+@search Base.Enums                # methods and macros in a module
 @search *(::Integer, ::Integer)   # methods with specified types
 @search dot(π, ℯ)                 # methods with inferred types
 ```
@@ -257,7 +257,7 @@ macro search(x = :ans)
     if should_eval(x)
         # Examples:
         #   @search show
-        #   @search Base.REPL
+        #   @search Base.Enums
         #   @search Base.Multimedia.displays[2].repl
         return :(code_search($(esc(x))))
     end
