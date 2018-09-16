@@ -61,6 +61,8 @@ end
 
 module_methods(m::Module) :: Vector{Method} =
     vcat(collect.(methods.(list_locatables(m)))...)
+# Note: the conversion `:: Vector{Method}` seems to be required only
+# for Julia 0.6.
 
 
 struct _Dummy end
