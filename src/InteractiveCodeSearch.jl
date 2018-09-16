@@ -389,7 +389,7 @@ end
 
 function choose_preferred_command(commands::Vector{Cmd})
     for cmd in commands
-        if Sys.which(cmd[1]) !== nothing
+        if Sys.which(cmd.exec[1]) !== nothing
             return cmd
         end
     end
@@ -405,9 +405,13 @@ function choose_preferred_command(f, commands::Vector{Cmd})
     end
 end
 
+# Julia 0.6
+const _preferred_terminal = preferred_terminal
+const _preferred_gui = preferred_gui
+
 function choose_interactive_matcher(;
-        preferred_terminal = preferred_terminal,
-        preferred_gui = preferred_gui,
+        preferred_terminal = _preferred_terminal,
+        preferred_gui = _preferred_gui,
         gui = need_gui())
     if gui
         return choose_preferred_command(preferred_gui) do
