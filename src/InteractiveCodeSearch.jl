@@ -244,10 +244,19 @@ function explicitly_typed(ex::Expr)
     return nothing
 end
 
-function parse_search_policy(flag)
-    if flag in :(:shallow, :s).args
+# Julia >= 0.7:
+parse_search_policy(flag::QuoteNode) = parse_search_policy(flag.value)
+# Julia 0.6:
+function parse_search_policy(flag::Expr)
+    @assert flag.head == :quote
+    @assert length(flag.args) == 1
+    return parse_search_policy(flag.args[1])
+end
+
+function parse_search_policy(flag::Symbol)
+    if flag in (:shallow, :s)
         return Shallow()
-    elseif flag in :(:recursive, :r).args
+    elseif flag in (:recursive, :r)
         return Recursive()
     end
     error("Invalid flag $flag")
