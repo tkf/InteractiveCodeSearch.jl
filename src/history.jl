@@ -24,39 +24,41 @@ function unescape_history(code::String)
     return code
 end
 
-const _history = String[]
+const history_provider = Ref{REPLHistoryProvider}()
 
-function load_history!(history::Vector{String})
+function load_history_provider()
+    if !isdefined(history_provider, 1)
+        history_provider[] = REPLHistoryProvider(Dict())
+    end
+    hp = history_provider[]
+    if !isempty(hp.history)
+        return hp
+    end
     path = find_hist_file()
     if !isfile(path)
-        return empty!(history)
+        return hp
     end
     open(path) do file
-        hp = hist_from_file(REPLHistoryProvider(Dict()), file, path)
-        resize!(_history, length(hp.history))
-        copyto!(_history, hp.history)
+        hist_from_file(hp, file, path)
     end
-    return history
+    return hp
 end
 
-load_history!() = load_history!(_history)
-
-function get_history()
+function get_history_provider()
     try
-        return Base.active_repl.interface.modes[1].hist.history
+        return Base.active_repl.interface.modes[1].hist
     catch
-        if isempty(_history)
-            load_history!(_history)
-        end
-        return _history
+        return load_history_provider()
     end
 end
 
 function write_transformed_history(io::IO,
-                                   history::Vector{String} = get_history())
-    for code in Iterators.reverse(history)
-        write(io, escape_history(code))
-        write(io, "\n")
+                                   hp = get_history_provider())
+    for (mode, code) in Iterators.reverse(zip(hp.modes, hp.history))
+        if mode == :julia
+            write(io, escape_history(code))
+            write(io, "\n")
+        end
     end
 end
 
