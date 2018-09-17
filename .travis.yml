@@ -28,7 +28,15 @@ git:
 #  - if [ $TRAVIS_OS_NAME = osx ]; then brew install gcc; fi
 
 script:
-  - julia --color=yes --depwarn=error ci/test.jl
+  # Ignore "Warning: `using A: B`" from julia 0.7:
+  - if [ "$TRAVIS_JULIA_VERSION" = "0.7" ];
+    then
+        depwarn=yes;
+    else
+        depwarn=error;
+    fi
+  - echo "$depwarn"
+  - julia --color=yes --depwarn="$depwarn" ci/test.jl
 
 after_success:
   # push coverage results to Coveralls
