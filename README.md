@@ -94,17 +94,6 @@ Note that `@search` evaluates complex expression with `.` and `[]` such as follo
 ```
 
 
-### `@searchhistory`
-
-```
-@searchhistory
-```
-
-Search history interactively.  Interactively narrows down the code you looking for from the REPL history.
-
-*Limitation/feature in IJulia*: In IJulia, `@searchhistory` searches history of terminal REPL, not the history of the current IJulia session.
-
-
 ### `@searchmethods`
 
 ```
@@ -120,6 +109,17 @@ Interactively search through `methodswith(typeof(x))` or `methodswith(X)`.
 @searchmethods 1         # search methods defined for integer
 @searchmethods ::Int     # search methods defined for a specified type
 ```
+
+
+### `@searchhistory`
+
+```
+@searchhistory
+```
+
+Search history interactively.  Interactively narrows down the code you looking for from the REPL history.
+
+*Limitation/feature in IJulia*: In IJulia, `@searchhistory` searches history of terminal REPL, not the history of the current IJulia session.
 
 
 ### `@searchreturn`

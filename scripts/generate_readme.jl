@@ -43,13 +43,16 @@ function generate_readme(io::IO = stdout)
     println(io, "## Reference")
     println(io)
 
-    age(f) = methods(f).ms[1].min_world
+    function loc(f)
+        m1, = methods(f).ms
+        return (m1.file, m1.line)
+    end
     exports = [
         (name, getproperty(InteractiveCodeSearch, name))
         for name in names(InteractiveCodeSearch)
     ]
     exports = filter((x -> x[2] isa Function), exports)
-    exports = sort(collect(exports), by=x -> age(x[2]))
+    exports = sort(collect(exports), by=x -> loc(x[2]))
 
     for (name, exported) in exports
         md = dropheaders(doc(exported))
