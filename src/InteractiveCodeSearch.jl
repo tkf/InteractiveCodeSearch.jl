@@ -41,6 +41,8 @@ using Base
     const _readandwrite = readandwrite
     const fetch = wait
     names(x; all=false) = Base.names(x, all)
+    methodswith(args...; supertypes=false) =
+        Base.methodswith(args..., supertypes)
     macro info(x)
         :(info($(esc(x))))
     end
@@ -438,7 +440,7 @@ macro search(x = :ans, flag = :(:shallow))
     end
 end
 
-code_search_methods(T) = search_methods(methodswith(T))
+code_search_methods(T) = search_methods(methodswith(T; supertypes=true))
 
 """
     @searchmethods x
