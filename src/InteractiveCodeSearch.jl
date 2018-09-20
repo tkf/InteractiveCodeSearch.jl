@@ -21,47 +21,12 @@ using InteractiveCodeSearch
 @searchreturn String Pkg # search methods returning a given type (Julia >= 0.7)
 ```
 
-
 ## Requirements
 
 * Interactive matching command.  For example:
   * [peco](https://github.com/peco/peco) (default in terminal)
   * [percol](https://github.com/mooz/percol)
   * [rofi](https://github.com/DaveDavenport/rofi) (GUI; default in IJulia)
-
-
-## Configuration
-
-```julia
-using InteractiveCodeSearch
-InteractiveCodeSearch.CONFIG.interactive_matcher = `peco`  # default in terminal
-InteractiveCodeSearch.CONFIG.interactive_matcher = `percol`
-InteractiveCodeSearch.CONFIG.interactive_matcher =
-    `rofi -dmenu -i -p "🔎"`  # use GUI matcher (default in non-terminal
-                              # environment like IJulia)
-InteractiveCodeSearch.CONFIG.interactive_matcher =
-    `rofi -dmenu -i -p "🔎" -fullscreen`  # bigger screen
-InteractiveCodeSearch.CONFIG.open = edit  # default
-InteractiveCodeSearch.CONFIG.open = less  # use Base.less to read code
-InteractiveCodeSearch.CONFIG.auto_open = true   # default
-InteractiveCodeSearch.CONFIG.auto_open = false  # open matcher even when there
-                                                # is only one candidate
-```
-
-
-### Using InteractiveCodeSearch.jl by default
-
-Use the same trick as
-[Revise.jl](https://github.com/timholy/Revise.jl/tree/v0.6); i.e., put
-the following code in your `~/.julia/config/startup.jl` (>= Julia 0.7)
-or `~/.juliarc.jl` (Julia 0.6):
-
-```julia
-@async begin
-    sleep(0.1)
-    @eval using InteractiveCodeSearch
-end
-```
 """
 module InteractiveCodeSearch
 export @search, @searchmethods
@@ -295,6 +260,42 @@ function code_search(p::SearchPolicy, ::T) where T
     code_search(p, T)
 end
 
+"""
+Configuration interface for `InteractiveCodeSearch`.
+
+# Examples
+
+```julia
+using InteractiveCodeSearch
+InteractiveCodeSearch.CONFIG.interactive_matcher = `peco`  # default in terminal
+InteractiveCodeSearch.CONFIG.interactive_matcher = `percol`
+InteractiveCodeSearch.CONFIG.interactive_matcher =
+    `rofi -dmenu -i -p "🔎"`  # use GUI matcher (default in non-terminal
+                              # environment like IJulia)
+InteractiveCodeSearch.CONFIG.interactive_matcher =
+    `rofi -dmenu -i -p "🔎" -fullscreen`  # bigger screen
+InteractiveCodeSearch.CONFIG.open = edit  # default
+InteractiveCodeSearch.CONFIG.open = less  # use Base.less to read code
+InteractiveCodeSearch.CONFIG.auto_open = true   # default
+InteractiveCodeSearch.CONFIG.auto_open = false  # open matcher even when there
+                                                # is only one candidate
+```
+
+## Using InteractiveCodeSearch.jl by default
+
+Use the same trick as
+[Revise.jl](https://github.com/timholy/Revise.jl/tree/v0.6); i.e., put
+the following code in your `~/.julia/config/startup.jl` (>= Julia 0.7)
+or `~/.juliarc.jl` (Julia 0.6):
+
+```julia
+@async begin
+    sleep(0.1)
+    @eval using InteractiveCodeSearch
+    # InteractiveCodeSearch.CONFIG.interactive_matcher = ...
+end
+```
+"""
 const CONFIG = SearchConfig(
     edit,                       # open
     `peco`,                     # interactive_matcher

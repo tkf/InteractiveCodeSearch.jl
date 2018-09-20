@@ -56,11 +56,17 @@ function generate_readme(io::IO = stdout)
 
     for (name, exported) in exports
         md = dropheaders(doc(exported))
-        insert!(md.content, 1, Markdown.parse("### `$name`"))
+        println(io, "### `$name`")
+        println(io)
         show(io, "text/markdown", md)
         println(io)
         println(io)
     end
+
+    println(io, "### `InteractiveCodeSearch.CONFIG`")
+    show(io, "text/markdown", dropheaders(@doc InteractiveCodeSearch.CONFIG))
+    println(io)
+    println(io)
 
     print(io, footer)
 end
