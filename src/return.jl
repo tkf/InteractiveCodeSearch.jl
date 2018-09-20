@@ -99,13 +99,22 @@ function searchreturn(typ::Type, modules::AbstractVector{Module};
 end
 
 """
-    @searchreturn T A B C ... Z
+    @searchreturn Type Module [Module...]
 
-Search functions returning type `T` in modules `A`, `B`, `C`, ... `Z`.
+Search functions returning type `Type` in `Module`s.
+
+# Limitations
+
+* First run of `@searchreturn` for a large package like `LinearAlgebra`
+  may be slow (~ 1 minute).
+* The functions must be executed (JIT'ed) once for `@searchreturn` to
+  find their returned by type.
 
 # Examples
-```
-@searchreturn Matrix Base
+```julia
+using LinearAlgebra, SparseArrays
+spzeros(3, 3)
+@searchreturn AbstractMatrix LinearAlgebra SparseArrays
 ```
 """
 macro searchreturn(typ, modules...)

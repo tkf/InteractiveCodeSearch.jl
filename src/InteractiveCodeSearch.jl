@@ -16,26 +16,18 @@ choose the code you want to read.
 ```julia
 using InteractiveCodeSearch
 @search show             # search method definitions
-@search @time            # search macro definitions
-@search Base.Enums       # search methods and macros in a module
-@search REPL :r          # search the module recursively
-@search *(::Int, ::Int)  # search methods with specified type
 @searchmethods 1         # search methods defined for integer
-@searchmethods ::Int     # search methods defined for a specified type
 @searchhistory           # search history (Julia >= 0.7)
 @searchreturn String Pkg # search methods returning a given type (Julia >= 0.7)
 ```
-
-First run of `@searchreturn` for a large package like `LinearAlgebra`
-may be slow (~ 1 minute).
 
 
 ## Requirements
 
 * Interactive matching command.  For example:
-  * [peco](https://github.com/peco/peco)
+  * [peco](https://github.com/peco/peco) (default in terminal)
   * [percol](https://github.com/mooz/percol)
-  * [rofi](https://github.com/DaveDavenport/rofi) (GUI)
+  * [rofi](https://github.com/DaveDavenport/rofi) (GUI; default in IJulia)
 
 
 ## Configuration
@@ -57,7 +49,7 @@ InteractiveCodeSearch.CONFIG.auto_open = false  # open matcher even when there
 ```
 
 
-## Using InteractiveCodeSearch.jl by default
+### Using InteractiveCodeSearch.jl by default
 
 Use the same trick as
 [Revise.jl](https://github.com/timholy/Revise.jl/tree/v0.6); i.e., put
@@ -382,7 +374,7 @@ If no expression is provided, search for the method returned by the
 previous execution; i.e., `x` defaults to `ans`.
 
 # Examples
-```
+```julia
 @search show                      # all method definitions
 @search @time                     # all macro definitions
 @search Base.Enums                # methods and macros in a module
@@ -393,7 +385,7 @@ previous execution; i.e., `x` defaults to `ans`.
 
 Note that `@search` evaluates complex expression with `.` and `[]`
 such as follows and search the returned value or the type of it:
-```
+```julia
 @search Base.Multimedia.displays[2].repl
 ```
 """
@@ -453,6 +445,12 @@ code_search_methods(T) = search_methods(methodswith(T))
 
 Interactively search through `methodswith(typeof(x))` or
 `methodswith(X)`.
+
+# Examples
+```julia
+@searchmethods 1         # search methods defined for integer
+@searchmethods ::Int     # search methods defined for a specified type
+```
 """
 macro searchmethods(x)
     if x isa Expr && x.head == :(::)
