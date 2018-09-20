@@ -26,6 +26,9 @@ end
 
 const history_provider = Ref{REPLHistoryProvider}()
 
+"""
+    load_history_provider() :: REPLHistoryProvider
+"""
 function load_history_provider()
     if !isdefined(history_provider, 1)
         history_provider[] = REPLHistoryProvider(Dict())
@@ -44,6 +47,9 @@ function load_history_provider()
     return hp
 end
 
+"""
+    get_history_provider() :: REPLHistoryProvider
+"""
 function get_history_provider()
     try
         return Base.active_repl.interface.modes[1].hist
