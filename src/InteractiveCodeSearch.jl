@@ -83,7 +83,9 @@ end
 maybe_identifier(s) = !startswith(string(s), "#")
 
 is_locatable(::Any) = false
-is_locatable(::Base.Callable) = true
+is_locatable(::Function) = true
+is_locatable(t::Type) = !(t <: Vararg)
+# https://github.com/JuliaLang/julia/issues/29645
 
 @static if VERSION < v"0.7-"
     is_defined_in(_...) = false
