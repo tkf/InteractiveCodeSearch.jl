@@ -80,7 +80,7 @@ mutable struct SearchConfig  # CONFIG
     auto_open
 end
 
-is_identifier(s) = occursin(r"^@?[a-z_]+$"i, string(s))
+maybe_identifier(s) = !startswith(string(s), "#")
 
 is_locatable(::Any) = false
 is_locatable(::Base.Callable) = true
@@ -95,7 +95,7 @@ end
 function list_locatables(p::SearchPolicy, m::Module)
     locs = []
     for s in names(m; all=true)
-        if is_identifier(s)
+        if maybe_identifier(s)
             x = try
                 getfield(m, s)
             catch err
