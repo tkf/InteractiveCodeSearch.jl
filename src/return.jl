@@ -70,12 +70,22 @@ function Base.iterate(cf::CallableFinder, state::CFState)
     return nothing
 end
 
-function rettype_is(method::Method, typ::Type)
-    method.specializations isa Core.TypeMapEntry || return false
-    method.specializations.func isa Core.MethodInstance || return false
-    method.specializations.func.rettype isa DataType || return false
-    method.specializations.func.rettype <: typ
+rettype_is(method::Method, typ::Type) =
+    rettype_is(method.specializations, typ)
+
+function rettype_is(specializations::Core.TypeMapEntry, typ::Type)
+    while true
+        specializations isa Core.TypeMapEntry || return false
+        specializations.func isa Core.MethodInstance || return false
+        specializations.func.rettype isa DataType || return false
+        specializations.func.rettype <: typ && return true
+        specializations.next === nothing && return false
+        specializations = specializations.next
+    end
 end
+
+rettype_is(::Any, typ::Type) = false
+
 # What to do with `Core.TypeMapLevel`?  See:
 # [typeof(m.specializations) for m in methods(!=).ms]
 
