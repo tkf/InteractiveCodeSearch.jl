@@ -76,8 +76,8 @@ struct Recursive <: SearchPolicy end
 
 mutable struct SearchConfig  # CONFIG
     open
-    interactive_matcher
-    auto_open
+    interactive_matcher::Cmd
+    auto_open::Bool
 end
 
 maybe_identifier(s) = !startswith(string(s), "#")
@@ -201,7 +201,10 @@ function parse_loc(line)
     return String(path), parse(Int, lineno)
 end
 
-run_matcher(input) = String(read_stdout(input, CONFIG.interactive_matcher))
+function run_matcher(input)
+    maybe_warn_matcher()
+    return String(read_stdout(input, CONFIG.interactive_matcher))
+end
 
 choose_method(methods::T) where T =
     _choose_method(Base.IteratorSize(T), methods)
@@ -524,8 +527,37 @@ function choose_interactive_matcher(;
     end
 end
 
+function matcher_installation_tips(program::AbstractString)
+    if program == "peco"
+        return """
+        See https://github.com/peco/peco for how to install peco.
+        """
+    elseif program == "rofi"
+        msg = """
+        See https://github.com/DaveDavenport/rofi for how to install rofi.
+        """
+    else
+        msg = ""
+    end
+    return """
+    $msg
+    For terminal usage, `peco` is recommended.
+    See https://github.com/peco/peco for how to install peco.
+    """
+end
+
+function maybe_warn_matcher(cmd = CONFIG.interactive_matcher)
+    if Sys.which(cmd.exec[1]) === nothing
+        @warn """
+        Matcher $(cmd.exec[1]) not installed.
+        $(matcher_installation_tips(cmd.exec[1]))
+        """
+    end
+end
+
 function __init__()
     CONFIG.interactive_matcher = choose_interactive_matcher()
+    maybe_warn_matcher()
 end
 
 @static if VERSION >= v"0.7-"
