@@ -174,6 +174,10 @@ function _start_search_return(id, args...)
     task = @async begin
         append!(found, search_by_rettype(args...))
         done[] = true
+
+        @info "Finished search id=$id.  Look it up by `@search $id`."
+        show(stderr, "text/plain", background_searches[id])
+        println(stderr)
     end
     return BackgroundSearch(id, query, found, task, done)
 end
@@ -191,8 +195,19 @@ function schedule_search_return(typ::Type,
     return search
 end
 
+# @search _s1
 code_search(::SearchPolicy, search::BackgroundSearch) =
     search_methods(search.found)
+
+# @search 1
+function code_search(p::SearchPolicy, id::Int)
+    if id < 1
+        search = background_searches[end + id]
+    else
+        search = background_searches[id]
+    end
+    return code_search(p, search)
+end
 
 function searchreturn(typ::Type, modules::AbstractVector{Module};
                       policy = Recursive())
@@ -225,7 +240,7 @@ julia> spzeros(3, 3)
 julia> @searchreturn AbstractMatrix LinearAlgebra SparseArrays
 ┌ Info: Search result is stored in variable `_s1`.
 │ You can interactively narrow down the search result later by
-└ `@search _s1`.
+└ `@search _s1` or `@search 1`.
 
 BackgroundSearch id=1 [active] 0 found
 Searching ::AbstractArray{T,1} where T from Module[LinearAlgebra SparseArrays] recursively
@@ -258,7 +273,7 @@ macro searchreturn(typ, modules...)
                 @info $("""
                 Search result is stored in variable `$result`.
                 You can interactively narrow down the search result later by
-                `@search $result` later.
+                `@search $result` or `@search $id`.
                 """)
                 $(esc(result)) = search
             end

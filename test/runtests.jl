@@ -162,13 +162,12 @@ end
         @test_nothrow @eval @search @search
         @test_nothrow @eval @search @search(read_stdout)
         @test_nothrow @eval @search ""
-        @test_nothrow @eval @search 1
         @test_nothrow @eval @search InteractiveCodeSearch
         @test_nothrow @eval @searchmethods im
         @test_nothrow @eval @searchmethods ::Complex
         @test_nothrow @eval @searchmethods c::Complex
         @test open_args == repeat([(find_source_file("test.jl"), 249)],
-                                  outer=12)
+                                  outer=11)
 
         # @show open_args
     end
