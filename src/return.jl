@@ -313,7 +313,7 @@ julia> @search my_search
 ```
 """
 macro searchreturn(typ, modules...)
-    modules_array = Expr(:vect, esc.(modules)...)
+    modules_array = Expr(:ref, Module, esc.(modules)...)
     id = nextid()
     result = Symbol("_s", id)
     quote
