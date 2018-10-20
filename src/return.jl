@@ -89,10 +89,15 @@ function rettype_is(specializations::Core.TypeMapEntry, typ::Type)
     end
 end
 
-rettype_is(::Any, typ::Type) = false
+function rettype_is(specializations::Core.TypeMapLevel, typ::Type)
+    specializations.arg1 isa Vector || return false
+    for a in specializations.arg1
+        rettype_is(a, typ) && return true
+    end
+    return false
+end
 
-# What to do with `Core.TypeMapLevel`?  See:
-# [typeof(m.specializations) for m in methods(!=).ms]
+rettype_is(::Any, typ::Type) = false
 
 rettype_is(typ::Type) = method -> rettype_is(method, typ)
 
