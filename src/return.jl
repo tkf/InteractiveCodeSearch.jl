@@ -63,7 +63,7 @@ function Base.iterate(cf::CallableFinder, state::CFState)
                     is_defined_in(x, m) &&
                     !(x in state.modules))
                 insert!(state.modules, state.i_module + 1, x)
-            elseif x isa Base.Callable && !(x in state.seen)
+            elseif is_locatable(x) && !(x in state.seen)
                 push!(state.seen, x)
                 return (x, advance_name(state, i + 1))
             end
