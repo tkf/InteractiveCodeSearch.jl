@@ -51,6 +51,7 @@ function Base.iterate(cf::CallableFinder, state::CFState)
     m = state.modules[state.i_module]
     for i in state.i_name:lastindex(state.names)
         name = state.names[i]
+        yield()  # Maybe throttle? Or Julia scheduler would do it?
         if isdefined(m, name)
             x = getproperty(m, name)
             if (cf.sp isa Recursive &&
@@ -94,24 +95,117 @@ rettype_is(typ::Type) = method -> rettype_is(method, typ)
 function search_by_rettype(sp::SearchPolicy,
                            typ::Type,
                            modules::AbstractVector{Module})
+    if isempty(modules)
+        modules = Base.loaded_modules_array()
+    end
     # methiters = map(methods, CallableFinder(modules, sp))  # -> array
     methiters = Base.Generator(methods, CallableFinder(modules, sp))
     meths = Iterators.flatten(methiters)
     return Iterators.filter(rettype_is(typ), meths)
 end
 
+struct SearchQuery
+    policy::SearchPolicy
+    returntype::Type
+    modules::Vector{Module}
+end
+
+struct BackgroundSearch
+    id::Int
+    query::SearchQuery
+    found::Vector
+    task::Task
+    done::Ref{Bool}
+end
+
+function showquery(io::IO, query::SearchQuery)
+    print(io, "::")
+    printstyled(io, query.returntype, color=:cyan)
+    if !isempty(query.modules)
+        print(io, " from ")
+        printstyled(io, query.modules, color=:cyan)
+    end
+    if query.policy isa Recursive
+        print(io, " recursively")
+    end
+    return
+end
+
+showquery(io, search::BackgroundSearch) = showquery(io, search.query)
+
+function Base.show(io::IO, query::SearchQuery)
+    print(io, nameof(typeof(query)), ": ")
+    showquery(io, query)
+    return
+end
+
+function Base.show(io::IO, search::BackgroundSearch)
+    print(io, nameof(typeof(search)), " id=", search.id)
+
+    # " [done]" or " [active]"
+    print(io, " [")
+    if search.done[]
+        printstyled(io, "done"; color=:green)
+    else
+        printstyled(io, "active"; color=:red)
+    end
+    print(io, "]")
+
+    print(io, " ", length(search.found), " found")
+    return
+end
+
+function Base.show(io::IO, ::MIME"text/plain", search::BackgroundSearch)
+    show(io, search)
+    println(io)
+    if search.done[]
+        print(io, "Searched ")
+    else
+        print(io, "Searching ")
+    end
+    showquery(io, search)
+    return
+end
+
+function _start_search_return(id, args...)
+    query = SearchQuery(args...)
+    found = []
+    done = Ref(false)
+    task = @async begin
+        append!(found, search_by_rettype(args...))
+        done[] = true
+    end
+    return BackgroundSearch(id, query, found, task, done)
+end
+
+const background_searches = BackgroundSearch[]
+
+nextid() = length(background_searches) + 1
+
+function schedule_search_return(typ::Type,
+                                modules::AbstractVector{Module};
+                                policy = Recursive())
+    search = _start_search_return(nextid(), policy, typ, modules)
+    # TODO: don't start search task immediately
+    push!(background_searches, search)
+    return search
+end
+
+code_search(::SearchPolicy, search::BackgroundSearch) =
+    search_methods(search.found)
+
 function searchreturn(typ::Type, modules::AbstractVector{Module};
                       policy = Recursive())
-    if isempty(modules)
-        modules = Base.loaded_modules_array()
-    end
     search_methods(search_by_rettype(policy, typ, modules))
 end
 
 """
     @searchreturn Type Module [Module...]
 
-Search functions returning type `Type` in `Module`s.
+Search functions returning type `Type` in `Module`s.  As this search
+typically takes some time to finish, interactive matcher will not be
+launched by this command.  Instead, a "handle" to the search in
+background is returned which can be queried via `@search` later.
 
 # Limitations
 
@@ -119,15 +213,57 @@ Search functions returning type `Type` in `Module`s.
   may be slow (~ 1 minute).
 * The functions must be executed (JIT'ed) once for `@searchreturn` to
   find their returned by type.
+* Any IO operations (like printing in REPL) would be slow while the search
+  is active in background.
 
 # Examples
-```julia
-using LinearAlgebra, SparseArrays
-spzeros(3, 3)
-@searchreturn AbstractMatrix LinearAlgebra SparseArrays
+```julia-repl
+julia> using LinearAlgebra, SparseArrays
+
+julia> spzeros(3, 3)
+
+julia> @searchreturn AbstractMatrix LinearAlgebra SparseArrays
+┌ Info: Search result is stored in variable `_s1`.
+│ You can interactively narrow down the search result later by
+└ `@search _s1`.
+
+BackgroundSearch id=1 [active] 0 found
+Searching ::AbstractArray{T,1} where T from Module[LinearAlgebra SparseArrays] recursively
+
+julia> @search _s1
+```
+
+If you prefer giving a custom name to the search result, just assign it to
+some variable.
+
+```julia-repl
+julia> my_search = @searchreturn AbstractMatrix LinearAlgebra SparseArrays
+julia> @search my_search
 ```
 """
 macro searchreturn(typ, modules...)
     modules_array = Expr(:vect, esc.(modules)...)
-    :(searchreturn($(esc(typ)), $modules_array))
+    id = nextid()
+    result = Symbol("_s", id)
+    quote
+        let search = schedule_search_return($(esc(typ)), $modules_array)
+            global $(esc(result))
+            if isdefined($(__module__), $(QuoteNode(result)))
+                @warn $("""
+                Variable `$result` exists!
+                To refer to the search result, `ans` must be saved to some
+                variable **NOW**.
+                """)
+            else
+                @info $("""
+                Search result is stored in variable `$result`.
+                You can interactively narrow down the search result later by
+                `@search $result` later.
+                """)
+                $(esc(result)) = search
+            end
+            println(stderr)
+            search
+        end
+    end
 end
