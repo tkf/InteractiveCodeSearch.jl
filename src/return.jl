@@ -276,6 +276,9 @@ Calling `kill` (`Base.kill`) on the handle cancels the search.
   find their returned by type.
 * Any IO operations (like printing in REPL) would be slow while the search
   is active in background.
+* Keyboard interruption does not work well while background search is
+  active.  You need to hit CTRL-C multiple times to terminate a "foreground"
+  code.  Furthermore, it will bring down the background search task as well.
 
 # Examples
 ```julia-repl
