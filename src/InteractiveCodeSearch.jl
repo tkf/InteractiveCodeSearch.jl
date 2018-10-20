@@ -561,6 +561,7 @@ function __init__()
 end
 
 @static if VERSION >= v"0.7-"
+    include("taskmanager.jl")
     include("history.jl")
     include("return.jl")
 end

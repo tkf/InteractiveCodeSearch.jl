@@ -161,6 +161,8 @@ function Base.show(io::IO, search::BackgroundSearch)
         printstyled(io, "done"; color=:green)
     elseif istaskdone(search.task)
         printstyled(io, "error"; color=:light_red, bold=true)
+    elseif !istaskstarted(search.task)
+        printstyled(io, "queued"; color=:magenta)
     else
         printstyled(io, "active"; color=:red)
     end
@@ -190,7 +192,7 @@ function _start_search_return(id, args...)
     found = []
     done = Ref(false)
     should_stop = Ref(false)
-    task = @async begin
+    task = @task begin
         append!(found, search_by_rettype(args..., should_stop))
         done[] = true
 
@@ -198,6 +200,7 @@ function _start_search_return(id, args...)
         show(stderr, "text/plain", background_searches[id])
         println(stderr)
     end
+    enqueue(task)
     return BackgroundSearch(id, query, found, task, done, should_stop)
 end
 
