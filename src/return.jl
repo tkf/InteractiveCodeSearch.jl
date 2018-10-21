@@ -75,17 +75,24 @@ function Base.iterate(cf::CallableFinder, state::CFState)
     return nothing
 end
 
+mayreturn(inferred::Type, typ::Type) = inferred <: typ
+
+mayreturn(inferred::Union, typ::Type) =
+    mayreturn(inferred.a, typ) || mayreturn(inferred.b, typ)
+
 rettype_is(method::Method, typ::Type) =
     rettype_is(method.specializations, typ)
 
 function rettype_is(specializations::Core.TypeMapEntry, typ::Type)
+    @goto start
     while true
-        specializations isa Core.TypeMapEntry || return false
-        specializations.func isa Core.MethodInstance || return false
-        specializations.func.rettype isa DataType || return false
-        specializations.func.rettype <: typ && return true
-        specializations.next === nothing && return false
         specializations = specializations.next
+        specializations === nothing && return false
+        @label start
+        specializations isa Core.TypeMapEntry || continue
+        specializations.func isa Core.MethodInstance || continue
+        specializations.func.rettype isa Type || continue
+        mayreturn(specializations.func.rettype, typ) && return true
     end
 end
 
