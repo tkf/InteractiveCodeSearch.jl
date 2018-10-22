@@ -1,32 +1,10 @@
 module TestInteractiveCodeSearch
 
-using InteractiveCodeSearch
+include("preamble.jl")
 using InteractiveCodeSearch:
     Shallow, Recursive, list_locatables, module_methods, choose_method,
     read_stdout, parse_loc, single_macrocall, isliteral
 using Base: find_source_file
-
-try
-    @eval using Test
-catch err
-    err isa ArgumentError || rethrow()
-    @eval using Base.Test
-end
-
-try
-    @eval import Pkg
-catch err
-    err isa ArgumentError || rethrow()
-end
-
-macro test_nothrow(ex)
-    quote
-        @test begin
-            $(esc(ex))
-            true
-        end
-    end
-end
 
 function with_config(f; kwargs...)
     config = deepcopy(InteractiveCodeSearch.CONFIG)
@@ -179,6 +157,10 @@ end
     ) do
         @test_nothrow @eval @search read_stdout
     end
+end
+
+@static if VERSION >= v"0.7-"
+    include("test_return.jl")
 end
 
 end  # module
