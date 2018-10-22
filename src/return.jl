@@ -10,12 +10,21 @@ Base.IteratorSize(::Type{<: CallableFinder}) = Base.SizeUnknown()
 Base.IteratorEltype(::Type{<: CallableFinder}) = Base.HasEltype()
 Base.eltype(::Type{<: CallableFinder}) = Base.Callable
 
+const SeenKey = Tuple{Module, Symbol}
+# As hashing types and functions takes time, convert them into "fully
+# qualified name" and has it instead.
+
+seenkey(::Any) = (Base, Symbol("## dummy ##"))
+seenkey(x::Union{Module, DataType, UnionAll, Function}) =
+    (parentmodule(x), nameof(x))
+# Since hashing `x` directly takes
+
 struct CFState
     names::Vector{Symbol}
     modules::Vector{Module}
     i_name::Int
     i_module::Int
-    seen::Set{Base.Callable}
+    seen::Set{SeenKey}
 end
 
 advance_name(state::CFState, i_name) =
@@ -44,7 +53,7 @@ function Base.iterate(cf::CallableFinder)
         collect(cf.modules),
         1,
         1,
-        Set{Base.Callable}())
+        Set([seenkey(nothing)]))
     return Base.iterate(cf, state)
 end
 
@@ -63,9 +72,12 @@ function Base.iterate(cf::CallableFinder, state::CFState)
                     is_defined_in(x, m) &&
                     !(x in state.modules))
                 insert!(state.modules, state.i_module + 1, x)
-            elseif is_locatable(x) && !(x in state.seen)
-                push!(state.seen, x)
-                return (x, advance_name(state, i + 1))
+            elseif is_locatable(x)
+                key = seenkey(x)
+                if !(key in state.seen)
+                    push!(state.seen, key)
+                    return (x, advance_name(state, i + 1))
+                end
             end
         end
     end
