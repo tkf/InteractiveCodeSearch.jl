@@ -1,5 +1,7 @@
 export @searchreturn
 
+using Base: unwrap_unionall
+
 struct CallableFinder{P <: SearchPolicy}
     modules::AbstractVector{Module}
     sp::P
@@ -14,10 +16,15 @@ const SeenKey = Tuple{Module, Symbol}
 # As hashing types and functions takes time, convert them into "fully
 # qualified name" and has it instead.
 
-seenkey(::Any) = (Base, Symbol("## dummy ##"))
-seenkey(x::Union{Module, DataType, UnionAll, Function}) =
-    (parentmodule(x), nameof(x))
-# Since hashing `x` directly takes
+seenkey(x::Any) = (Base, Symbol("## dummy ##"))
+seenkey(x::Union{Module, DataType, UnionAll, Function}) = _seenkey(x, x)
+
+_seenkey(x::Any, ::Any) = seenkey(x)
+_seenkey(x::UnionAll, o) = _seenkey(unwrap_unionall(x), o)
+_seenkey(x::Union{Module, DataType, Function}, o) = (parentmodule(x), nameof(o))
+# `parentmodule(::UnionAll)` and do `unwrap_unionall`.  However, it may
+# be wrapping `Union` and it would throw an error in this case.
+# Manually handled here to fallback to `_seenkey(::Any, ::Any)`.
 
 struct CFState
     names::Vector{Symbol}
