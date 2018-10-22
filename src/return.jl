@@ -294,7 +294,7 @@ function searchreturn(typ::Type, modules::AbstractVector{Module};
 end
 
 """
-    @searchreturn Type Module [Module...]
+    @searchreturn Type [Module...]
 
 Search functions returning type `Type` in `Module`s.  As this search
 typically takes some time to finish, interactive matcher will not be
@@ -304,8 +304,14 @@ Calling `kill` (`Base.kill`) on the handle cancels the search.
 
 # Limitations
 
-* First run of `@searchreturn` for a large package like `LinearAlgebra`
-  may be slow (~ 1 minute).
+* Running `@searchreturn` for many modules may be slow for the _first_
+  run.  Thus, searching from all modules (i.e., not specifying
+  `Module` arguments) may take tens of seconds to minutes, depending
+  of what are loaded.  Searching within `Base` takes ~30 seconds.
+  After `DifferentialEquations` is loaded, searching for all modules
+  takes 1.5 minutes.  Note that searching from the same module for the
+  second time is fast (~ a few seconds), even if different `Type` is
+  specified.
 * The functions must be executed (JIT'ed) once for `@searchreturn` to
   find their returned by type.
 * Any IO operations (like printing in REPL) would be slow while the search
@@ -326,7 +332,7 @@ julia> @searchreturn AbstractMatrix LinearAlgebra SparseArrays
 └ `@search _s1` or `@search 1`.
 
 BackgroundSearch id=1 [active] 0 found
-Searching ::AbstractArray{T,1} where T from Module[LinearAlgebra SparseArrays] recursively
+Searching ::AbstractArray{T,2} where T from Module[LinearAlgebra SparseArrays] recursively
 
 julia> @search _s1
 
