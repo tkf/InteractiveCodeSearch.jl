@@ -96,14 +96,14 @@ Search history interactively.  Interactively narrows down the code you looking f
 ### `@searchreturn`
 
 ```
-@searchreturn Type Module [Module...]
+@searchreturn Type [Module...]
 ```
 
 Search functions returning type `Type` in `Module`s.  As this search typically takes some time to finish, interactive matcher will not be launched by this command.  Instead, a "handle" to the search in background is returned which can be queried via `@search` later. Calling `kill` (`Base.kill`) on the handle cancels the search.
 
 **Limitations**
 
-  * First run of `@searchreturn` for a large package like `LinearAlgebra` may be slow (~ 1 minute).
+  * Running `@searchreturn` for many modules may be slow for the *first* run.  Thus, searching from all modules (i.e., not specifying `Module` arguments) may take tens of seconds to minutes, depending of what are loaded.  Searching within `Base` takes ~30 seconds. After `DifferentialEquations` is loaded, searching for all modules takes 1.5 minutes.  Note that searching from the same module for the second time is fast (~ a few seconds), even if different `Type` is specified.
   * The functions must be executed (JIT'ed) once for `@searchreturn` to find their returned by type.
   * Any IO operations (like printing in REPL) would be slow while the search is active in background.
   * Keyboard interruption does not work well while background search is active.  You need to hit CTRL-C multiple times to terminate a "foreground" code.  Furthermore, it will bring down the background search task as well.
@@ -121,7 +121,7 @@ julia> @searchreturn AbstractMatrix LinearAlgebra SparseArrays
 └ `@search _s1` or `@search 1`.
 
 BackgroundSearch id=1 [active] 0 found
-Searching ::AbstractArray{T,1} where T from Module[LinearAlgebra SparseArrays] recursively
+Searching ::AbstractArray{T,2} where T from Module[LinearAlgebra SparseArrays] recursively
 
 julia> @search _s1
 
