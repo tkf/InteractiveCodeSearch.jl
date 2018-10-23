@@ -24,6 +24,11 @@ end
     kill(s)
     _, t = @timed wait(s.task)
     @test t < 0.5
+
+    # Check "Variable `_s3` exists!" path:
+    global _s3 = nothing
+    s = @eval @searchreturn Vector Pkg
+    @test_nothrow @time wait(s.task)
 end
 
 end  # module
