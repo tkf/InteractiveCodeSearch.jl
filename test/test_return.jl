@@ -1,7 +1,7 @@
 module TestReturn
 
 include("preamble.jl")
-using InteractiveCodeSearch: seenkey
+using InteractiveCodeSearch: seenkey, SeenKey
 
 @testset "seenkey" begin
     @testset for x in [
@@ -12,7 +12,7 @@ using InteractiveCodeSearch: seenkey
                 Union{AbstractArray{T,1}, AbstractArray{T,2}} where T,
                 Union{Int, Bool},
             ]
-        @test_nothrow seenkey(x)
+        @test seenkey(x) isa SeenKey
     end
 end
 
