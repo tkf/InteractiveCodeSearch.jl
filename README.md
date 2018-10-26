@@ -109,7 +109,7 @@ Search functions returning type `Type` in `Module`s.  As this search typically t
 
 **Limitations**
 
-  * Running `@searchreturn` for many modules may be slow for the *first* run.  Thus, searching from all modules (i.e., not specifying `Module` arguments) may take tens of seconds to minutes, depending of what are loaded.  Searching within `Base` takes ~30 seconds. After `DifferentialEquations` is loaded, searching for all modules takes 1.5 minutes.  Note that searching from the same module for the second time is fast (~ a few seconds), even if different `Type` is specified.
+  * Running `@searchreturn` for many modules may be slow for the *first* run.  Thus, searching from all modules (i.e., not specifying `Module` arguments) may take tens of seconds to minutes, depending of what are loaded.  Searching within `Base` takes about 30 seconds. After `DifferentialEquations` is loaded, searching for all modules takes 1.5 minutes.  Note that searching from the same module for the second time is fast (a few seconds), even if different `Type` is specified.
   * The functions must be executed (JIT'ed) once for `@searchreturn` to find their returned by type.
   * Any IO operations (like printing in REPL) would be slow while the search is active in background.
   * Keyboard interruption does not work well while background search is active.  You need to hit CTRL-C multiple times to terminate a "foreground" code.  Furthermore, it will bring down the background search task as well.

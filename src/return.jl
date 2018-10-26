@@ -307,10 +307,10 @@ Calling `kill` (`Base.kill`) on the handle cancels the search.
 * Running `@searchreturn` for many modules may be slow for the _first_
   run.  Thus, searching from all modules (i.e., not specifying
   `Module` arguments) may take tens of seconds to minutes, depending
-  of what are loaded.  Searching within `Base` takes ~30 seconds.
+  of what are loaded.  Searching within `Base` takes about 30 seconds.
   After `DifferentialEquations` is loaded, searching for all modules
   takes 1.5 minutes.  Note that searching from the same module for the
-  second time is fast (~ a few seconds), even if different `Type` is
+  second time is fast (a few seconds), even if different `Type` is
   specified.
 * The functions must be executed (JIT'ed) once for `@searchreturn` to
   find their returned by type.
