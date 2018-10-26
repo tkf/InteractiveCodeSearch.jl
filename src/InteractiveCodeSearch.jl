@@ -8,8 +8,21 @@ implementation of functions.  However, you need to specify a "good
 enough" set of (type) parameters for them to find the location of the
 code.
 
-Instead, `InteractiveCodeSearch` provides a way to interactively
-choose the code you want to read.
+Instead, `InteractiveCodeSearch` provides a few macros to
+interactively choose the code you want to read.
+
+## Features
+
+* Interactively choose a method signature before opening the code
+  location in your editor.
+
+* Various ways to search methods, such as: by function name `@search show`,
+  function call expression `@search show(stdout, "hello")`,
+  function call signature `@search show(::IO, ::String)`,
+  module name `@search Base`, argument value `@searchmethods 1`,
+  argument type `@searchmethods ::Int`, and return type `@searchreturn Int`.
+
+* Interactively search history.  It works in IJulia as well.
 
 ## Examples
 
@@ -17,8 +30,8 @@ choose the code you want to read.
 using InteractiveCodeSearch
 @search show             # search method definitions
 @searchmethods 1         # search methods defined for integer
-@searchhistory           # search history (Julia >= 0.7)
-@searchreturn String Pkg # search methods returning a given type (Julia >= 0.7)
+@searchhistory           # search history (Julia ≥ 0.7)
+@searchreturn String Pkg # search methods returning a given type (Julia ≥ 0.7)
 ```
 
 ## Requirements
@@ -290,17 +303,12 @@ InteractiveCodeSearch.CONFIG.auto_open = false  # open matcher even when there
 
 ## Using InteractiveCodeSearch.jl by default
 
-Use the same trick as
-[Revise.jl](https://github.com/timholy/Revise.jl/tree/v0.6); i.e., put
-the following code in your `~/.julia/config/startup.jl` (>= Julia 0.7)
+Put the following code in your `~/.julia/config/startup.jl` (≥ Julia 0.7)
 or `~/.juliarc.jl` (Julia 0.6):
 
 ```julia
-@async begin
-    sleep(0.1)
-    @eval using InteractiveCodeSearch
-    # InteractiveCodeSearch.CONFIG.interactive_matcher = ...
-end
+using InteractiveCodeSearch
+# InteractiveCodeSearch.CONFIG.interactive_matcher = ...
 ```
 """
 const CONFIG = SearchConfig(
