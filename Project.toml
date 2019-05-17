@@ -1,6 +1,6 @@
 name = "InteractiveCodeSearch"
 uuid = "54eb57ff-b09b-5185-b2f4-7a93509e494f"
-version = "0.3.1"
+version = "0.3.2-DEV"
 
 [deps]
 InteractiveUtils = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
