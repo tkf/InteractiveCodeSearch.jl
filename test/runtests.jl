@@ -159,7 +159,7 @@ end
     end
 end
 
-@static if VERSION >= v"0.7-"
+if v"0.7-" <= VERSION < v"1.2-"
     include("test_return.jl")
 end
 

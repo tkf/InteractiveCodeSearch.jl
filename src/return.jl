@@ -304,6 +304,7 @@ Calling `kill` (`Base.kill`) on the handle cancels the search.
 
 # Limitations
 
+* It does not work with Julia >= 1.2.
 * Running `@searchreturn` for many modules may be slow for the _first_
   run.  Thus, searching from all modules (i.e., not specifying
   `Module` arguments) may take tens of seconds to minutes, depending
