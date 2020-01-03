@@ -103,7 +103,7 @@ end
 end
 
 @testset "find_source_file" begin
-    m = first(methods(Pkg.clone))
+    m = first(methods(Pkg.add))
     file = string(m.file)
     found = InteractiveCodeSearch.find_source_file(file)
     @eval @test isfile($found)
