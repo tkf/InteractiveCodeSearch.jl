@@ -13,5 +13,10 @@ notifications:
 git:
   depth: 99999999
 
+# Only build branches via PR to avoid running CI twice.
+# https://docs.travis-ci.com/user/conditional-builds-stages-jobs
+# https://docs.travis-ci.com/user/conditions-v1
+if: branch = master OR tag IS present OR type != push
+
 coveralls: true
 codecov: true
