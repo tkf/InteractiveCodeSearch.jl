@@ -13,36 +13,5 @@ notifications:
 git:
   depth: 99999999
 
-## uncomment the following lines to allow failures on nightly julia
-## (tests will run but not make your overall status red)
-#matrix:
-#  allow_failures:
-#  - julia: nightly
-
-## uncomment and modify the following lines to manually install system packages
-#addons:
-#  apt: # apt-get for linux
-#    packages:
-#    - gfortran
-#before_script: # homebrew for mac
-#  - if [ $TRAVIS_OS_NAME = osx ]; then brew install gcc; fi
-
-install:
-  - ci/install.jl
-
-script:
-  # Ignore "Warning: `using A: B`" from julia 0.7:
-  - if [ "$TRAVIS_JULIA_VERSION" = "0.7" ];
-    then
-        depwarn=yes;
-    else
-        depwarn=error;
-    fi
-  - echo "$depwarn"
-  - ci/test.jl --depwarn="$depwarn"
-
-after_success:
-  # push coverage results to Coveralls
-  - julia --color=yes -e 'cd(Pkg.dir("InteractiveCodeSearch")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
-  # push coverage results to Codecov
-  - julia --color=yes -e 'cd(Pkg.dir("InteractiveCodeSearch")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
+coveralls: true
+codecov: true
