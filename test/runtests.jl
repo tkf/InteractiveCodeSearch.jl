@@ -53,10 +53,8 @@ end
     @test locs >= Set(Any[ModuleA.a])
     locs = Set(list_locatables(Shallow(), ModuleA.ModuleB))
     @test locs >= Set(Any[ModuleA.ModuleB.b])
-    if VERSION >= v"0.7-"
-        locs = Set(list_locatables(Recursive(), ModuleA))
-        @test locs >= Set(Any[ModuleA.a, ModuleA.ModuleB.b])
-    end
+    locs = Set(list_locatables(Recursive(), ModuleA))
+    @test locs >= Set(Any[ModuleA.a, ModuleA.ModuleB.b])
 end
 
 @testset "module_methods" begin

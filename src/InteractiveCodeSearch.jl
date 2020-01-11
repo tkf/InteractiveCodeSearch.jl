@@ -1,5 +1,3 @@
-__precompile__()
-
 """
 # InteractiveCodeSearch.jl --- Interactively search Julia code
 
@@ -44,43 +42,16 @@ using InteractiveCodeSearch
 module InteractiveCodeSearch
 export @search, @searchmethods
 
+import Pkg
 using Base
+using Base: IOError
+using InteractiveUtils: edit, gen_call_with_extracted_types, methodswith
 
-@static if VERSION < v"0.7-"
-    const IOError = Base.UVError
-    const Nothing = Void
-    const findall = find
-    const occursin = ismatch
-    const _readandwrite = readandwrite
-    const fetch = wait
-    names(x; all=false) = Base.names(x, all)
-    methodswith(args...; supertypes=false) =
-        Base.methodswith(args..., supertypes)
-    macro info(x)
-        :(info($(esc(x))))
-    end
-    macro warn(x)
-        :(warn($(esc(x))))
-    end
-    using Base: gen_call_with_extracted_types
-    @eval module Sys
-        function which(program::AbstractString)
-            try
-                strip(readstring(`which $program`))
-            catch
-                nothing
-            end
-        end
-    end  # module
-else
-    import Pkg
-    using Base: IOError
-    using InteractiveUtils: edit, gen_call_with_extracted_types, methodswith
-    function _readandwrite(cmds)
-        processes = open(cmds, "r+")
-        return (processes.out, processes.in, processes)
-    end
+function _readandwrite(cmds)
+    processes = open(cmds, "r+")
+    return (processes.out, processes.in, processes)
 end
+
 
 abstract type SearchPolicy end
 struct Shallow <: SearchPolicy end
@@ -100,12 +71,8 @@ is_locatable(::Function) = true
 is_locatable(t::Type) = !(t <: Vararg)
 # https://github.com/JuliaLang/julia/issues/29645
 
-@static if VERSION < v"0.7-"
-    is_defined_in(_...) = false
-else
-    is_defined_in(child, parent) =
-        child !== parent && parentmodule(child) === parent
-end
+is_defined_in(child, parent) =
+    child !== parent && parentmodule(child) === parent
 
 function list_locatables(p::SearchPolicy, m::Module)
     locs = []
@@ -221,11 +188,6 @@ end
 
 choose_method(methods::T) where T =
     _choose_method(Base.IteratorSize(T), methods)
-
-@static if VERSION < v"0.7-"
-    choose_method(methods::Union{Base.MethodList, AbstractVector}) =
-        _choose_method(Base.HasLength(), methods)
-end
 
 function _choose_method(::Base.HasLength, methods)
     if isempty(methods)
@@ -446,11 +408,7 @@ macro search(x = :ans, flag = :(:shallow))
     # Examples:
     #   @search 1 * 2
     #   @search dot([], [])
-    if VERSION < v"0.7-"
-        gen_call_with_extracted_types(code_search_typed, x)
-    else
-        gen_call_with_extracted_types(__module__, code_search_typed, x)
-    end
+    gen_call_with_extracted_types(__module__, code_search_typed, x)
 end
 
 code_search_methods(T) = search_methods(methodswith(T; supertypes=true))
@@ -489,10 +447,7 @@ const preferred_gui = Cmd[
     # what else?
 ]
 
-function need_gui(stdstreams = [
-                      (@static VERSION < v"0.7-" ? STDOUT : stdout),
-                      (@static VERSION < v"0.7-" ? STDIN : stdin),
-                  ])
+function need_gui(stdstreams = [stdout, stdin])
     return !all(isa.(stdstreams, Ref(Base.TTY)))
 end
 
@@ -568,10 +523,8 @@ function __init__()
     maybe_warn_matcher()
 end
 
-@static if VERSION >= v"0.7-"
-    include("taskmanager.jl")
-    include("history.jl")
-    include("return.jl")
-end
+include("taskmanager.jl")
+include("history.jl")
+include("return.jl")
 
 end # module

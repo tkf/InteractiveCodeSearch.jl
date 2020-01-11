@@ -1,9 +1,5 @@
-@static if VERSION < v"0.7.0-"
-    using Base.Test
-else
-    using Test
-    import Pkg
-end
+using Test
+import Pkg
 
 using InteractiveCodeSearch
 
