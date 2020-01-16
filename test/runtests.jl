@@ -3,7 +3,7 @@ module TestInteractiveCodeSearch
 include("preamble.jl")
 using InteractiveCodeSearch:
     Shallow, Recursive, list_locatables, module_methods, choose_method,
-    read_stdout, parse_loc, single_macrocall, isliteral
+    read_stdout, parse_loc, single_macrocall, isliteral, convertCmd
 using Base: find_source_file
 
 function with_config(f; kwargs...)
@@ -22,8 +22,8 @@ function with_config(f; kwargs...)
 end
 
 @testset "read_stdout" begin
-    @test strip(String(read_stdout("spam", `cat`))) == "spam"
-    @test strip(String(read_stdout(io -> write(io, "egg"), `cat`))) == "egg"
+    @test strip(String(read_stdout("spam", convertCmd(`cat`)))) == "spam"
+    @test strip(String(read_stdout(io -> write(io, "egg"), convertCmd(`cat`)))) == "egg"
 end
 
 @testset "parse_loc" begin
@@ -70,7 +70,7 @@ end
 
     with_config(
         open = (_...) -> error("must not be called"),
-        interactive_matcher = `echo " at test.jl:249"`,
+        interactive_matcher = convertCmd(`echo " at test.jl:249"`),
         auto_open = true,
     ) do
         # when function has only one method, `auto_open` has to kick-in:
@@ -91,7 +91,7 @@ end
 
     with_config(
         open = (_...) -> error("must not be called"),
-        interactive_matcher = `echo " at test.jl:249"`,
+        interactive_matcher = convertCmd(`echo " at test.jl:249"`),
         auto_open = false,
     ) do
         # When `auto_open = false`, the matcher has to be called
@@ -127,7 +127,7 @@ end
     dummy_openline(args...) = push!(open_args, args)
 
     with_config(
-        interactive_matcher = `echo " at test.jl:249"`,
+        interactive_matcher = convertCmd(`echo " at test.jl:249"`),
         open = dummy_openline,
         auto_open = false,
     ) do
@@ -149,7 +149,7 @@ end
     end
 
     with_config(
-        interactive_matcher = `true`,
+        interactive_matcher = convertCmd(`true`),
         open = (args...) -> error("open must not be called"),
         auto_open = false,
     ) do

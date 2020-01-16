@@ -6,6 +6,7 @@ version = "0.3.3-DEV"
 InteractiveUtils = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 REPL = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
+peco_jll = "b89f85f3-45f8-5ea8-8223-9dfa39faf294"
 
 [compat]
 julia = "= 0.7, 1.0"

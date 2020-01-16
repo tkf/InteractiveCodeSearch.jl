@@ -47,12 +47,6 @@ using Base
 using Base: IOError
 using InteractiveUtils: edit, gen_call_with_extracted_types, methodswith
 
-function _readandwrite(cmds)
-    processes = open(cmds, "r+")
-    return (processes.out, processes.in, processes)
-end
-
-
 abstract type SearchPolicy end
 struct Shallow <: SearchPolicy end
 struct Recursive <: SearchPolicy end
@@ -60,8 +54,25 @@ struct Recursive <: SearchPolicy end
 
 mutable struct SearchConfig  # CONFIG
     open
-    interactive_matcher::Cmd
+    interactive_matcher::Function
     auto_open::Bool
+end
+
+function setmatcher!(cmd::Function, obj::SearchConfig)
+    obj.interactive_matcher = cmd
+    return
+end
+
+function setmatcher!(cmd::Cmd, obj::SearchConfig)
+    setmatcher!(convertCmd(cmd), obj)
+end
+
+function convertCmd(cmd)
+    maybe_warn_matcher(cmd)
+    return function (f)
+        maybe_warn_matcher(cmd)
+        f(cmd)
+    end
 end
 
 maybe_identifier(s) = !startswith(string(s), "#")
@@ -147,6 +158,12 @@ function find_source_file(file)
     return path
 end
 
+function _readandwrite(matcher)
+    proc = matcher() do cmd
+        open(`$cmd`, "r+")
+    end
+    return (proc.out, proc.in, proc)
+end
 
 """
     read_stdout(input::AbstractString, cmd)
@@ -182,7 +199,6 @@ function parse_loc(line)
 end
 
 function run_matcher(input)
-    maybe_warn_matcher()
     return String(read_stdout(input, CONFIG.interactive_matcher))
 end
 
@@ -265,8 +281,7 @@ InteractiveCodeSearch.CONFIG.auto_open = false  # open matcher even when there
 
 ## Using InteractiveCodeSearch.jl by default
 
-Put the following code in your `~/.julia/config/startup.jl` (≥ Julia 0.7)
-or `~/.juliarc.jl` (Julia 0.6):
+Put the following code in your `~/.julia/config/startup.jl` (≥ Julia 0.7):
 
 ```julia
 using InteractiveCodeSearch
@@ -275,7 +290,7 @@ using InteractiveCodeSearch
 """
 const CONFIG = SearchConfig(
     edit,                       # open
-    `peco`,                     # interactive_matcher
+    x->error("uninitialized"),  # interactive_matcher
     true,                       # auto_open
 )
 
@@ -437,10 +452,23 @@ macro searchmethods(x)
     end
 end
 
-const preferred_terminal = Cmd[
-    `peco`,
-    `percol`,
-]
+################################################################################
+#                               matcher binaries                               #
+################################################################################
+
+@static if VERSION<v"1.3-"
+    const preferred_terminal = Cmd[
+        `peco`,
+        `percol`,
+    ]
+else
+    using peco_jll
+    const preferred_terminal = Union{Function,Cmd}[
+        `peco`,
+        peco,
+        `percol`,
+    ]
+end
 
 const preferred_gui = Cmd[
     `rofi -dmenu -i -p "🔎"`,
@@ -451,43 +479,18 @@ function need_gui(stdstreams = [stdout, stdin])
     return !all(isa.(stdstreams, Ref(Base.TTY)))
 end
 
-function choose_preferred_command(commands::Vector{Cmd})
+function choose_preferred_command(commands::Vector{<:Union{Function,Cmd}}, default=nothing)
     for cmd in commands
-        if Sys.which(cmd.exec[1]) !== nothing
+        if !(cmd isa Cmd) || Sys.which(cmd.exec[1]) !== nothing
             return cmd
         end
     end
-    return nothing
+    return default
 end
 
-function choose_preferred_command(f, commands::Vector{Cmd})
-    cmd = choose_preferred_command(commands)
-    if cmd !== nothing
-        return cmd
-    else
-        return f()
-    end
-end
-
-# Julia 0.6
-const _preferred_terminal = preferred_terminal
-const _preferred_gui = preferred_gui
-
-function choose_interactive_matcher(;
-        preferred_terminal = _preferred_terminal,
-        preferred_gui = _preferred_gui,
-        gui = need_gui())
-    if gui
-        return choose_preferred_command(preferred_gui) do
-            return preferred_gui[1]
-        end
-    else
-        return choose_preferred_command(preferred_terminal) do
-            return choose_preferred_command(preferred_gui) do
-                return preferred_terminal[1]
-            end
-        end
-    end
+function choose_interactive_matcher()
+    need_gui() && return choose_preferred_command(preferred_gui, preferred_gui[1])
+    return choose_preferred_command(vcat(preferred_terminal, preferred_gui), preferred_terminal[1])
 end
 
 function matcher_installation_tips(program::AbstractString)
@@ -509,7 +512,7 @@ function matcher_installation_tips(program::AbstractString)
     """
 end
 
-function maybe_warn_matcher(cmd = CONFIG.interactive_matcher)
+function maybe_warn_matcher(cmd::Cmd)
     if Sys.which(cmd.exec[1]) === nothing
         @warn """
         Matcher $(cmd.exec[1]) not installed.
@@ -519,8 +522,7 @@ function maybe_warn_matcher(cmd = CONFIG.interactive_matcher)
 end
 
 function __init__()
-    CONFIG.interactive_matcher = choose_interactive_matcher()
-    maybe_warn_matcher()
+    setmatcher!(choose_interactive_matcher(), CONFIG)
 end
 
 include("taskmanager.jl")
