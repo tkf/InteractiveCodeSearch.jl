@@ -281,7 +281,7 @@ InteractiveCodeSearch.CONFIG.auto_open = false  # open matcher even when there
 
 ## Using InteractiveCodeSearch.jl by default
 
-Put the following code in your `~/.julia/config/startup.jl` (≥ Julia 0.7):
+Put the following code in your `~/.julia/config/startup.jl`:
 
 ```julia
 using InteractiveCodeSearch
