@@ -46,6 +46,7 @@ import Pkg
 import fzf_jll
 using Base
 using Base: IOError
+using Compat: addenv
 using InteractiveUtils: edit, gen_call_with_extracted_types, methodswith
 
 function _readandwrite(cmds)
@@ -474,12 +475,28 @@ function choose_interactive_matcher(;
             return preferred_gui[1]
         end
     else
-        previewer = "echo {} | sed 's/⏎/\\n/g'"
-        if Sys.which("pygmentize") !== nothing
-            previewer = "$previewer | pygmentize -l jl"
+        preview_jl = joinpath(@__DIR__, "preview.jl")
+        preview_cmd = `
+        $(Base.julia_cmd())
+        --startup-file=no
+        --color=yes
+        --compile=min
+        -O0
+        $preview_jl
+        `
+        previewer = string(preview_cmd)
+        if startswith(previewer, '`') && endswith(previewer, '`')
+            previewer = previewer[2:end-1]
         end
-        fzf = fzf_jll.fzf()
-        return `$fzf --preview $previewer`
+        cmd = fzf_jll.fzf()
+        if !occursin("--layout", get(ENV, "FZF_DEFAULT_OPTS", ""))
+            cmd = `$cmd --layout=reverse`
+        end
+        cmd = `$cmd --preview $(previewer * " {}")`
+        if Sys.which("pygmentize") !== nothing
+            cmd = addenv(cmd, "_INTERACTIVECODESEARCH_JL_HIGHLIGHTER" => "pygmentize -l jl")
+        end
+        return cmd
     end
 end
 
