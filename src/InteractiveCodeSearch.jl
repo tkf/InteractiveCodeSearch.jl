@@ -67,6 +67,7 @@ mutable struct SearchConfig  # CONFIG
     open
     interactive_matcher::Cmd
     auto_open::Bool
+    trigger_key::Union{Nothing,Char}
 end
 
 maybe_identifier(s) = !startswith(string(s), "#")
@@ -267,6 +268,8 @@ InteractiveCodeSearch.CONFIG.open = less  # use Base.less to read code
 InteractiveCodeSearch.CONFIG.auto_open = true   # default
 InteractiveCodeSearch.CONFIG.auto_open = false  # open matcher even when there
                                                 # is only one candidate
+InteractiveCodeSearch.CONFIG.trigger_key = ')'      # insert "@search" on ')' (default)
+InteractiveCodeSearch.CONFIG.trigger_key = nothing  # disable shortcut
 ```
 
 ## Using InteractiveCodeSearch.jl by default
@@ -283,6 +286,7 @@ const CONFIG = SearchConfig(
     edit,                       # open
     `peco`,                     # interactive_matcher
     true,                       # auto_open
+    ')',                        # trigger_key
 )
 
 should_eval(::Any) = false
@@ -551,10 +555,12 @@ end
 
 function __init__()
     CONFIG.interactive_matcher = choose_interactive_matcher()
+    setup_keybinds()
 end
 
 include("taskmanager.jl")
 include("history.jl")
 include("return.jl")
+include("keybinds.jl")
 
 end # module
