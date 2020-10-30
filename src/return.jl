@@ -2,6 +2,8 @@ export @searchreturn
 
 using Base: unwrap_unionall
 
+include("taskmanager.jl")
+
 struct CallableFinder{P <: SearchPolicy}
     modules::AbstractVector{Module}
     sp::P
