@@ -1,4 +1,21 @@
-#!/usr/bin/env julia
+#!/bin/bash
+# -*- mode: julia -*-
+#=
+JULIA="${JULIA:-julia}"
+JULIA_CMD="${JULIA_CMD:-${JULIA} --color=yes --startup-file=no}"
+
+thisdir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+rootdir="$(dirname "$thisdir")"
+export JULIA_PROJECT="$thisdir"
+export JULIA_LOAD_PATH="@"
+
+set -ex
+${JULIA_CMD} \
+    -e 'using Pkg; Pkg.develop(name="InteractiveCodeSearch", url=ARGS[1])' \
+    "$rootdir"
+
+exec ${JULIA_CMD} "${BASH_SOURCE[0]}" "$@"
+=#
 
 header = """
 
