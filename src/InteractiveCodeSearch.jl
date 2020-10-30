@@ -45,7 +45,12 @@ export @search, @searchmethods
 import Pkg
 using Base
 using Base: IOError
+using Compat: addenv
 using InteractiveUtils: edit, gen_call_with_extracted_types, methodswith
+
+if VERSION >= v"1.3"
+    import fzf_jll
+end
 
 function _readandwrite(cmds)
     processes = open(cmds, "r+")
@@ -249,7 +254,8 @@ Configuration interface for `InteractiveCodeSearch`.
 
 ```julia
 using InteractiveCodeSearch
-InteractiveCodeSearch.CONFIG.interactive_matcher = `peco`  # default in terminal
+InteractiveCodeSearch.CONFIG.interactive_matcher = `fzf ...`  # default in terminal
+InteractiveCodeSearch.CONFIG.interactive_matcher = `peco`
 InteractiveCodeSearch.CONFIG.interactive_matcher = `percol`
 InteractiveCodeSearch.CONFIG.interactive_matcher =
     `rofi -dmenu -i -p "🔎"`  # use GUI matcher (default in non-terminal
@@ -438,6 +444,8 @@ macro searchmethods(x)
 end
 
 const preferred_terminal = Cmd[
+    # Only used in julia < 1.3
+    `fzf`,
     `peco`,
     `percol`,
 ]
@@ -469,24 +477,52 @@ function choose_preferred_command(f, commands::Vector{Cmd})
     end
 end
 
-# Julia 0.6
-const _preferred_terminal = preferred_terminal
-const _preferred_gui = preferred_gui
+function _get_fzf_cmd(options)
+    applicable(fzf_jll.fzf) && return `$(fzf_jll.fzf()) $options`
+    return fzf_jll.fzf() do cmd
+        cmd = `$cmd $options`
+        return setenv(cmd, copy(ENV))
+    end
+end
 
 function choose_interactive_matcher(;
-        preferred_terminal = _preferred_terminal,
-        preferred_gui = _preferred_gui,
+        preferred_terminal = preferred_terminal,
+        preferred_gui = preferred_gui,
         gui = need_gui())
     if gui
         return choose_preferred_command(preferred_gui) do
             return preferred_gui[1]
         end
-    else
+    elseif VERSION < v"1.3"
         return choose_preferred_command(preferred_terminal) do
             return choose_preferred_command(preferred_gui) do
                 return preferred_terminal[1]
             end
         end
+    else
+        preview_jl = joinpath(@__DIR__, "preview.jl")
+        preview_cmd = `
+        $(Base.julia_cmd())
+        --startup-file=no
+        --color=yes
+        --compile=min
+        -O0
+        $preview_jl
+        `
+        previewer = string(preview_cmd)
+        if startswith(previewer, '`') && endswith(previewer, '`')
+            previewer = previewer[2:end-1]
+        end
+        fzf_options = ``
+        if !occursin("--layout", get(ENV, "FZF_DEFAULT_OPTS", ""))
+            fzf_options = `$fzf_options --layout=reverse`
+        end
+        fzf_options = `$fzf_options --preview $(previewer * " {}")`
+        cmd = _get_fzf_cmd(fzf_options)
+        if Sys.which("pygmentize") !== nothing
+            cmd = addenv(cmd, "_INTERACTIVECODESEARCH_JL_HIGHLIGHTER" => "pygmentize -l jl")
+        end
+        return cmd
     end
 end
 
@@ -496,17 +532,12 @@ function matcher_installation_tips(program::AbstractString)
         See https://github.com/peco/peco for how to install peco.
         """
     elseif program == "rofi"
-        msg = """
+        return """
         See https://github.com/DaveDavenport/rofi for how to install rofi.
         """
     else
-        msg = ""
+        return ""
     end
-    return """
-    $msg
-    For terminal usage, `peco` is recommended.
-    See https://github.com/peco/peco for how to install peco.
-    """
 end
 
 function maybe_warn_matcher(cmd = CONFIG.interactive_matcher)
@@ -520,7 +551,6 @@ end
 
 function __init__()
     CONFIG.interactive_matcher = choose_interactive_matcher()
-    maybe_warn_matcher()
 end
 
 include("taskmanager.jl")
