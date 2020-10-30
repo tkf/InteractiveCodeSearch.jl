@@ -65,7 +65,7 @@ struct Recursive <: SearchPolicy end
 
 mutable struct SearchConfig  # CONFIG
     open
-    interactive_matcher::Cmd
+    interactive_matcher::Union{Nothing,Cmd}
     auto_open::Bool
     trigger_key::Union{Nothing,Char}
 end
@@ -188,8 +188,7 @@ function parse_loc(line)
 end
 
 function run_matcher(input)
-    maybe_warn_matcher()
-    return String(read_stdout(input, CONFIG.interactive_matcher))
+    return String(read_stdout(input, get_interactive_matcher()))
 end
 
 choose_method(methods::T) where T =
@@ -284,7 +283,7 @@ using InteractiveCodeSearch
 """
 const CONFIG = SearchConfig(
     edit,                       # open
-    `peco`,                     # interactive_matcher
+    nothing,                    # interactive_matcher
     true,                       # auto_open
     ')',                        # trigger_key
 )
@@ -553,14 +552,24 @@ function maybe_warn_matcher(cmd = CONFIG.interactive_matcher)
     end
 end
 
+function get_interactive_matcher()
+    cmd = CONFIG.interactive_matcher
+    if cmd === nothing
+        CONFIG.interactive_matcher = cmd = choose_interactive_matcher()
+    end
+    cmd::Cmd
+    maybe_warn_matcher(cmd)
+    return cmd
+end
+
 function __init__()
-    CONFIG.interactive_matcher = choose_interactive_matcher()
     setup_keybinds()
 end
 
-include("taskmanager.jl")
 include("history.jl")
-include("return.jl")
 include("keybinds.jl")
+if VERSION < v"1.2"
+    include("return.jl")
+end
 
 end # module
