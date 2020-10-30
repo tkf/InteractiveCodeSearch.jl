@@ -43,11 +43,14 @@ module InteractiveCodeSearch
 export @search, @searchmethods
 
 import Pkg
-import fzf_jll
 using Base
 using Base: IOError
 using Compat: addenv
 using InteractiveUtils: edit, gen_call_with_extracted_types, methodswith
+
+if VERSION >= v"1.3"
+    import fzf_jll
+end
 
 function _readandwrite(cmds)
     processes = open(cmds, "r+")
@@ -440,6 +443,13 @@ macro searchmethods(x)
     end
 end
 
+const preferred_terminal = Cmd[
+    # Only used in julia < 1.3
+    `fzf`,
+    `peco`,
+    `percol`,
+]
+
 const preferred_gui = Cmd[
     `rofi -dmenu -i -p "🔎"`,
     # what else?
@@ -467,12 +477,27 @@ function choose_preferred_command(f, commands::Vector{Cmd})
     end
 end
 
+function _get_fzf_cmd(options)
+    applicable(fzf_jll.fzf) && return `$(fzf_jll.fzf()) $options`
+    return fzf_jll.fzf() do cmd
+        cmd = `$cmd $options`
+        return setenv(cmd, copy(ENV))
+    end
+end
+
 function choose_interactive_matcher(;
+        preferred_terminal = preferred_terminal,
         preferred_gui = preferred_gui,
         gui = need_gui())
     if gui
         return choose_preferred_command(preferred_gui) do
             return preferred_gui[1]
+        end
+    elseif VERSION < v"1.3"
+        return choose_preferred_command(preferred_terminal) do
+            return choose_preferred_command(preferred_gui) do
+                return preferred_terminal[1]
+            end
         end
     else
         preview_jl = joinpath(@__DIR__, "preview.jl")
@@ -488,11 +513,12 @@ function choose_interactive_matcher(;
         if startswith(previewer, '`') && endswith(previewer, '`')
             previewer = previewer[2:end-1]
         end
-        cmd = fzf_jll.fzf()
+        fzf_options = ``
         if !occursin("--layout", get(ENV, "FZF_DEFAULT_OPTS", ""))
-            cmd = `$cmd --layout=reverse`
+            fzf_options = `$fzf_options --layout=reverse`
         end
-        cmd = `$cmd --preview $(previewer * " {}")`
+        fzf_options = `$fzf_options --preview $(previewer * " {}")`
+        cmd = _get_fzf_cmd(fzf_options)
         if Sys.which("pygmentize") !== nothing
             cmd = addenv(cmd, "_INTERACTIVECODESEARCH_JL_HIGHLIGHTER" => "pygmentize -l jl")
         end
