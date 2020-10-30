@@ -109,6 +109,7 @@ Search functions returning type `Type` in `Module`s.  As this search typically t
 
 **Limitations**
 
+  * It does not work with Julia >= 1.2.
   * Running `@searchreturn` for many modules may be slow for the *first* run.  Thus, searching from all modules (i.e., not specifying `Module` arguments) may take tens of seconds to minutes, depending of what are loaded.  Searching within `Base` takes about 30 seconds. After `DifferentialEquations` is loaded, searching for all modules takes 1.5 minutes.  Note that searching from the same module for the second time is fast (a few seconds), even if different `Type` is specified.
   * The functions must be executed (JIT'ed) once for `@searchreturn` to find their returned by type.
   * Any IO operations (like printing in REPL) would be slow while the search is active in background.
@@ -149,7 +150,8 @@ Configuration interface for `InteractiveCodeSearch`.
 
 ```julia
 using InteractiveCodeSearch
-InteractiveCodeSearch.CONFIG.interactive_matcher = `peco`  # default in terminal
+InteractiveCodeSearch.CONFIG.interactive_matcher = `fzf ...`  # default in terminal
+InteractiveCodeSearch.CONFIG.interactive_matcher = `peco`
 InteractiveCodeSearch.CONFIG.interactive_matcher = `percol`
 InteractiveCodeSearch.CONFIG.interactive_matcher =
     `rofi -dmenu -i -p "🔎"`  # use GUI matcher (default in non-terminal
@@ -161,6 +163,8 @@ InteractiveCodeSearch.CONFIG.open = less  # use Base.less to read code
 InteractiveCodeSearch.CONFIG.auto_open = true   # default
 InteractiveCodeSearch.CONFIG.auto_open = false  # open matcher even when there
                                                 # is only one candidate
+InteractiveCodeSearch.CONFIG.trigger_key = ')'      # insert "@search" on ')' (default)
+InteractiveCodeSearch.CONFIG.trigger_key = nothing  # disable shortcut
 ```
 
 **Using InteractiveCodeSearch.jl by default**
