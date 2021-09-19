@@ -19,18 +19,15 @@ exec ${JULIA_CMD} "${BASH_SOURCE[0]}" "$@"
 
 header = """
 
-[![Build Status][travis-img]][travis-url]
-[![Coverage Status][coveralls-img]][coveralls-url]
+[![Build Status][ci-img]][ci-url]
 [![codecov.io][codecov-img]][codecov-url]
 
 ![gif animation](search.gif "Searching code using @search")
 """
 
 footer = """
-[travis-img]: https://travis-ci.org/tkf/InteractiveCodeSearch.jl.svg?branch=master
-[travis-url]: https://travis-ci.org/tkf/InteractiveCodeSearch.jl
-[coveralls-img]: https://coveralls.io/repos/tkf/InteractiveCodeSearch.jl/badge.svg?branch=master&service=github
-[coveralls-url]: https://coveralls.io/github/tkf/InteractiveCodeSearch.jl?branch=master
+[ci-img]: https://github.com/tkf/InteractiveCodeSearch.jl/actions/workflows/test.yml/badge.svg
+[ci-url]: https://github.com/tkf/InteractiveCodeSearch.jl/actions/workflows/test.yml
 [codecov-img]: http://codecov.io/github/tkf/InteractiveCodeSearch.jl/coverage.svg?branch=master
 [codecov-url]: http://codecov.io/github/tkf/InteractiveCodeSearch.jl?branch=master
 
