@@ -17,8 +17,8 @@ interactively choose the code you want to read.
 * Various ways to search methods, such as: by function name `@search show`,
   function call expression `@search show(stdout, "hello")`,
   function call signature `@search show(::IO, ::String)`,
-  module name `@search Base`, argument value `@searchmethods 1`,
-  argument type `@searchmethods ::Int`, and return type `@searchreturn Int`.
+  module name `@search Base`, argument value `@searchmethods 1`, and
+  argument type `@searchmethods ::Int`.
 
 * Interactively search history.  It works in IJulia as well.
 
@@ -29,13 +29,13 @@ using InteractiveCodeSearch
 @search show             # search method definitions
 @searchmethods 1         # search methods defined for integer
 @searchhistory           # search history (Julia ≥ 0.7)
-@searchreturn String Pkg # search methods returning a given type (Julia ≥ 0.7)
 ```
 
 ## Requirements
 
 * Interactive matching command.  For example:
-  * [peco](https://github.com/peco/peco) (default in terminal)
+  * [fzf](https://github.com/junegunn/fzf) (default in terminal)
+  * [peco](https://github.com/peco/peco)
   * [percol](https://github.com/mooz/percol)
   * [rofi](https://github.com/DaveDavenport/rofi) (GUI; default in IJulia)
 """

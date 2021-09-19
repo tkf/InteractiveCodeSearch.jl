@@ -14,7 +14,7 @@ Instead, `InteractiveCodeSearch` provides a few macros to interactively choose t
 ## Features
 
   * Interactively choose a method signature before opening the code location in your editor.
-  * Various ways to search methods, such as: by function name `@search show`, function call expression `@search show(stdout, "hello")`, function call signature `@search show(::IO, ::String)`, module name `@search Base`, argument value `@searchmethods 1`, argument type `@searchmethods ::Int`, and return type `@searchreturn Int`.
+  * Various ways to search methods, such as: by function name `@search show`, function call expression `@search show(stdout, "hello")`, function call signature `@search show(::IO, ::String)`, module name `@search Base`, argument value `@searchmethods 1`, and argument type `@searchmethods ::Int`.
   * Interactively search history.  It works in IJulia as well.
 
 ## Examples
@@ -24,14 +24,14 @@ using InteractiveCodeSearch
 @search show             # search method definitions
 @searchmethods 1         # search methods defined for integer
 @searchhistory           # search history (Julia ≥ 0.7)
-@searchreturn String Pkg # search methods returning a given type (Julia ≥ 0.7)
 ```
 
 ## Requirements
 
   * Interactive matching command.  For example:
 
-      * [peco](https://github.com/peco/peco) (default in terminal)
+      * [fzf](https://github.com/junegunn/fzf) (default in terminal)
+      * [peco](https://github.com/peco/peco)
       * [percol](https://github.com/mooz/percol)
       * [rofi](https://github.com/DaveDavenport/rofi) (GUI; default in IJulia)
 
@@ -97,50 +97,6 @@ Interactively search through `methodswith(typeof(x))` or `methodswith(X)`.
 Search history interactively.  Interactively narrows down the code you looking for from the REPL history.
 
 *Limitation/feature in IJulia*: In IJulia, `@searchhistory` searches history of terminal REPL, not the history of the current IJulia session.
-
-
-### `@searchreturn`
-
-```
-@searchreturn Type [Module...]
-```
-
-Search functions returning type `Type` in `Module`s.  As this search typically takes some time to finish, interactive matcher will not be launched by this command.  Instead, a "handle" to the search in background is returned which can be queried via `@search` later. Calling `kill` (`Base.kill`) on the handle cancels the search.
-
-**Limitations**
-
-  * It does not work with Julia >= 1.2.
-  * Running `@searchreturn` for many modules may be slow for the *first* run.  Thus, searching from all modules (i.e., not specifying `Module` arguments) may take tens of seconds to minutes, depending of what are loaded.  Searching within `Base` takes about 30 seconds. After `DifferentialEquations` is loaded, searching for all modules takes 1.5 minutes.  Note that searching from the same module for the second time is fast (a few seconds), even if different `Type` is specified.
-  * The functions must be executed (JIT'ed) once for `@searchreturn` to find their returned by type.
-  * Any IO operations (like printing in REPL) would be slow while the search is active in background.
-  * Keyboard interruption does not work well while background search is active.  You need to hit CTRL-C multiple times to terminate a "foreground" code.  Furthermore, it will bring down the background search task as well.
-
-**Examples**
-
-```julia-repl
-julia> using LinearAlgebra, SparseArrays
-
-julia> spzeros(3, 3)
-
-julia> @searchreturn AbstractMatrix LinearAlgebra SparseArrays
-┌ Info: Search result is stored in variable `_s1`.
-│ You can interactively narrow down the search result later by
-└ `@search _s1` or `@search 1`.
-
-BackgroundSearch id=1 [active] 0 found
-Searching ::AbstractArray{T,2} where T from Module[LinearAlgebra SparseArrays] recursively
-
-julia> @search _s1
-
-julia> kill(_s1)  # stop the search
-```
-
-If you prefer giving a custom name to the search result, just assign it to some variable.
-
-```julia-repl
-julia> my_search = @searchreturn AbstractMatrix LinearAlgebra SparseArrays
-julia> @search my_search
-```
 
 
 ### `InteractiveCodeSearch.CONFIG`
