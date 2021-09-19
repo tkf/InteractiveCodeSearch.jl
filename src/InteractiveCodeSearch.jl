@@ -74,8 +74,14 @@ maybe_identifier(s) = !startswith(string(s), "#")
 
 is_locatable(::Any) = false
 is_locatable(::Function) = true
-is_locatable(t::Type) = !(t <: Vararg)
 # https://github.com/JuliaLang/julia/issues/29645
+if VERSION < v"1.7-"
+    is_locatable(t::Type) = !(t <: Vararg)
+else
+    is_locatable(t::Type) = true
+    # t <: Vararg now throws
+    # https://github.com/JuliaLang/julia/issues/41446
+end
 
 is_defined_in(child, parent) =
     child !== parent && parentmodule(child) === parent
@@ -194,7 +200,7 @@ end
 choose_method(methods::T) where T =
     _choose_method(Base.IteratorSize(T), methods)
 
-function _choose_method(::Base.HasLength, methods)
+function _choose_method(::Union{Base.HasLength,Base.HasShape}, methods)
     if isempty(methods)
         @info "No (interesting) method found"
         return
