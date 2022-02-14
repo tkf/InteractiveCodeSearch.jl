@@ -11,7 +11,7 @@ fzf_jll = "214eeab7-80f7-51ab-84ad-2988db7cef09"
 
 [compat]
 Compat = "3.16"
-fzf_jll = "0.24"
+fzf_jll = "0.24, 0.25, 0.26, 0.27"
 julia = "1.0"
 
 [extras]
