@@ -19,7 +19,7 @@ end
 
 function setup_keybinds_impl()
     # This is why we need https://github.com/JuliaLang/julia/pull/29896...
-    for _ in 1:20
+    for _ in 1:200
         try
             Base.active_repl.interface.modes[1].keymap_dict
             @goto ok
